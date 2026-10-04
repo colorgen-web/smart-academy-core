@@ -3,30 +3,31 @@ import { GraduationCap } from 'lucide-react'
 
 import { KakaoIcon, NaverIcon } from '@/components/icons/social'
 import { Button } from '@/components/ui/button'
-
-export type SocialProvider = 'naver' | 'kakao'
-
-const PROVIDER_LABEL: Record<SocialProvider, string> = {
-  naver: '네이버',
-  kakao: '카카오',
-}
+import { signIn, type SocialProvider } from '@/lib/auth'
 
 type LoginPageProps = {
-  onSocialLogin?: (provider: SocialProvider) => void
   onGuest: () => void
+  /** 네이버 콜백 실패 등 바깥에서 넘겨주는 오류 */
+  error?: string | null
 }
 
-export function LoginPage({ onSocialLogin, onGuest }: LoginPageProps) {
+export function LoginPage({ onGuest, error }: LoginPageProps) {
   const [notice, setNotice] = useState<string | null>(null)
+  const [pending, setPending] = useState<SocialProvider | null>(null)
 
-  const handleSocial = (provider: SocialProvider) => {
-    if (onSocialLogin) {
-      onSocialLogin(provider)
-      return
+  const handleSocial = async (provider: SocialProvider) => {
+    setNotice(null)
+    setPending(provider)
+    try {
+      // 성공하면 네이버/카카오 인증 페이지로 이동한다
+      await signIn(provider)
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : '로그인에 실패했어요.')
+      setPending(null)
     }
-    // TODO: 네이버/카카오 OAuth 연동 후 onSocialLogin 으로 교체
-    setNotice(`${PROVIDER_LABEL[provider]} 로그인은 연동 준비 중이에요.`)
   }
+
+  const message = notice ?? error
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-muted/40 px-4 py-10">
@@ -45,6 +46,7 @@ export function LoginPage({ onSocialLogin, onGuest }: LoginPageProps) {
           <Button
             size="lg"
             className="h-12 w-full gap-2 bg-[#03C75A] text-[15px] text-white hover:bg-[#03C75A]/90"
+            disabled={pending !== null}
             onClick={() => handleSocial('naver')}
           >
             <NaverIcon className="size-4" />
@@ -53,6 +55,7 @@ export function LoginPage({ onSocialLogin, onGuest }: LoginPageProps) {
           <Button
             size="lg"
             className="h-12 w-full gap-2 bg-[#FEE500] text-[15px] text-black/85 hover:bg-[#FEE500]/90"
+            disabled={pending !== null}
             onClick={() => handleSocial('kakao')}
           >
             <KakaoIcon className="size-5" />
@@ -60,9 +63,9 @@ export function LoginPage({ onSocialLogin, onGuest }: LoginPageProps) {
           </Button>
         </div>
 
-        {notice && (
-          <p role="status" className="mt-3 text-center text-sm text-muted-foreground">
-            {notice}
+        {message && (
+          <p role="alert" className="mt-3 text-center text-sm text-destructive">
+            {message}
           </p>
         )}
 
