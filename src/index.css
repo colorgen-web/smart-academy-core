@@ -122,5 +122,6 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    word-break: keep-all;
   }
 }

@@ -1,16 +1,18 @@
-import { Button } from '@/components/ui/button'
+import { useState } from 'react'
+
+import { GuestHomePage } from '@/pages/GuestHomePage'
+import { LoginPage } from '@/pages/LoginPage'
+
+type Screen = 'login' | 'guest'
 
 function App() {
-  return (
-    <main className="flex min-h-svh flex-col items-center justify-center gap-4 p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Smart Academy</h1>
-      <p className="text-muted-foreground">Tailwind CSS + shadcn/ui 설정 완료</p>
-      <div className="flex gap-2">
-        <Button>시작하기</Button>
-        <Button variant="outline">더 알아보기</Button>
-      </div>
-    </main>
-  )
+  const [screen, setScreen] = useState<Screen>('login')
+
+  if (screen === 'guest') {
+    return <GuestHomePage onLogin={() => setScreen('login')} />
+  }
+
+  return <LoginPage onGuest={() => setScreen('guest')} />
 }
 
 export default App
