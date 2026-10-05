@@ -1,14 +1,14 @@
-import type { User } from '@supabase/supabase-js'
 import { Bell, CalendarDays, ClipboardCheck, LogIn } from 'lucide-react'
 import { useState } from 'react'
 
 import { LatestAnnouncements } from '@/components/announcements/LatestAnnouncements'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { getUserProfile } from '@/lib/user'
+import type { Profile } from '@/lib/profile'
 
 type HomeTabProps = {
-  user: User | null
+  /** null 이면 게스트 */
+  profile: Profile | null
   onLogin: () => void
 }
 
@@ -19,8 +19,8 @@ const SUMMARY = [
   { label: '새 알림', icon: Bell, tone: 'bg-warning/25 text-warning-foreground dark:text-warning' },
 ]
 
-export function HomeTab({ user, onLogin }: HomeTabProps) {
-  const name = user ? getUserProfile(user).name : null
+export function HomeTab({ profile, onLogin }: HomeTabProps) {
+  const name = profile?.name ?? null
   const [today] = useState(() =>
     new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' }),
   )
@@ -34,7 +34,7 @@ export function HomeTab({ user, onLogin }: HomeTabProps) {
         </h1>
       </section>
 
-      {!user && (
+      {!profile && (
         <Card className="bg-primary text-primary-foreground ring-0">
           <CardContent className="flex items-center gap-3">
             <div className="flex-1">

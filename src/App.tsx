@@ -2,14 +2,17 @@ import { useEffect, useState, type ReactElement } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router'
 
 import { AppShell } from '@/components/layout/AppShell'
+import { Button } from '@/components/ui/button'
 import { TABS } from '@/components/layout/tabs'
 import { useAuth } from '@/hooks/useAuth'
+import { useProfile } from '@/hooks/useProfile'
 import '@/hooks/useTheme' // 테마 적용 + OS 다크모드 변경 구독 (모듈 로드 시 1회)
 import { completeNaverSignIn, isAdmin as checkAdmin, NAVER_CALLBACK_PATH } from '@/lib/auth'
 import { AnnouncementDetailPage } from '@/pages/announcements/AnnouncementDetailPage'
 import { AnnouncementsPage } from '@/pages/announcements/AnnouncementsPage'
 import { AnnouncementWritePage } from '@/pages/announcements/AnnouncementWritePage'
 import { LoginPage } from '@/pages/LoginPage'
+import { SignupPage } from '@/pages/SignupPage'
 import { HomeTab } from '@/pages/tabs/HomeTab'
 import { AttendanceTab, ClassesTab, LockedTab, NoticesTab } from '@/pages/tabs/PlaceholderTabs'
 import { SettingsTab } from '@/pages/tabs/SettingsTab'
@@ -24,6 +27,8 @@ function App() {
   const [guest, setGuest] = useState(false)
   const [naverPending, setNaverPending] = useState(isNaverCallback)
   const [authError, setAuthError] = useState<string | null>(null)
+  const user = session?.user ?? null
+  const { profile, error: profileError, setProfile, reload: reloadProfile } = useProfile(user?.id)
 
   useEffect(() => {
     if (!isNaverCallback()) return
@@ -35,7 +40,20 @@ function App() {
       })
   }, [navigate])
 
-  if (loading || naverPending) {
+  if (!user && !loading && !naverPending && !guest) {
+    return <LoginPage onGuest={() => setGuest(true)} error={authError} />
+  }
+
+  if (user && profileError) {
+    return (
+      <main className="flex min-h-svh flex-col items-center justify-center gap-3 px-4 text-center">
+        <p className="font-semibold">회원 정보를 불러오지 못했어요.</p>
+        <Button onClick={reloadProfile}>다시 시도</Button>
+      </main>
+    )
+  }
+
+  if (loading || naverPending || (user && profile === undefined)) {
     return (
       <main className="flex min-h-svh items-center justify-center text-sm text-muted-foreground">
         로그인 확인 중…
@@ -43,9 +61,9 @@ function App() {
     )
   }
 
-  const user = session?.user ?? null
-  if (!user && !guest) {
-    return <LoginPage onGuest={() => setGuest(true)} error={authError} />
+  // 로그인은 했지만 회원 정보가 없으면 회원가입부터
+  if (user && profile === null) {
+    return <SignupPage user={user} onComplete={setProfile} />
   }
 
   const isGuest = !user
@@ -63,11 +81,11 @@ function App() {
   return (
     <AppShell isGuest={isGuest}>
       <Routes>
-        <Route index element={<HomeTab user={user} onLogin={goLogin} />} />
+        <Route index element={<HomeTab profile={profile ?? null} onLogin={goLogin} />} />
         <Route path="attendance" element={tabElement('attendance', <AttendanceTab />)} />
         <Route path="classes" element={tabElement('classes', <ClassesTab />)} />
         <Route path="notices" element={tabElement('notices', <NoticesTab />)} />
-        <Route path="settings" element={<SettingsTab user={user} onLogin={goLogin} />} />
+        <Route path="settings" element={<SettingsTab user={user} profile={profile ?? null} onLogin={goLogin} />} />
         <Route path="announcements" element={<AnnouncementsPage isAdmin={isAdmin} />} />
         <Route
           path="announcements/new"

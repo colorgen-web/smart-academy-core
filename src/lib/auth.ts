@@ -42,33 +42,7 @@ export function signInWithNaver() {
   window.location.assign(url)
 }
 
-const LOGIN_PROVIDER_KEY = 'academy_login_provider'
-
-/**
- * 이 기기에서 마지막으로 누른 로그인 버튼.
- * 네이버·카카오 이메일이 같으면 같은 계정으로 로그인되므로, 계정 정보(app_metadata.provider)만으로는
- * 이번에 어느 쪽으로 들어왔는지 알 수 없어 따로 기록한다.
- */
-export function getLoginProvider(): SocialProvider | null {
-  try {
-    const value = localStorage.getItem(LOGIN_PROVIDER_KEY)
-    return value === 'kakao' || value === 'naver' ? value : null
-  } catch {
-    return null
-  }
-}
-
-function setLoginProvider(provider: SocialProvider | null) {
-  try {
-    if (provider) localStorage.setItem(LOGIN_PROVIDER_KEY, provider)
-    else localStorage.removeItem(LOGIN_PROVIDER_KEY)
-  } catch {
-    // 표시용 정보라 저장 실패는 무시
-  }
-}
-
 export function signIn(provider: SocialProvider) {
-  setLoginProvider(provider)
   return provider === 'kakao' ? signInWithKakao() : signInWithNaver()
 }
 
@@ -109,7 +83,6 @@ export function completeNaverSignIn() {
 }
 
 export async function signOut() {
-  setLoginProvider(null)
   await supabase?.auth.signOut()
 }
 

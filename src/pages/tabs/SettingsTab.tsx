@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useTheme, type Theme } from '@/hooks/useTheme'
 import { signOut } from '@/lib/auth'
-import { getUserProfile } from '@/lib/user'
+import { maskPhone, MEMBER_TYPE_LABEL, PROVIDER_LABEL, socialInfo, type Profile } from '@/lib/profile'
 import { cn } from '@/lib/utils'
 
 const THEME_OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
@@ -19,13 +19,14 @@ const THEME_OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
 
 type SettingsTabProps = {
   user: User | null
+  profile: Profile | null
   onLogin: () => void
 }
 
-export function SettingsTab({ user, onLogin }: SettingsTabProps) {
+export function SettingsTab({ user, profile, onLogin }: SettingsTabProps) {
   const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
-  const profile = user ? getUserProfile(user) : null
+  const avatarUrl = user ? socialInfo(user).avatarUrl : undefined
   const [signingOut, setSigningOut] = useState(false)
 
   const handleSignOut = async () => {
@@ -40,22 +41,40 @@ export function SettingsTab({ user, onLogin }: SettingsTabProps) {
     <div className="flex flex-col gap-4">
       <Card>
         <CardContent className="flex items-center gap-3">
-          {profile?.avatarUrl ? (
-            <img src={profile.avatarUrl} alt="" className="size-12 rounded-full object-cover" />
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="size-12 rounded-full object-cover" />
           ) : (
             <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
               <UserRound className="size-6" />
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">{profile?.name ?? '게스트'}</p>
+            <p className="flex items-center gap-1.5 font-semibold">
+              <span className="truncate">{profile?.name ?? '게스트'}</span>
+              {profile && <Badge variant="outline">{MEMBER_TYPE_LABEL[profile.member_type]}</Badge>}
+            </p>
             <p className="truncate text-sm text-muted-foreground">
-              {profile ? profile.email : '로그인하지 않았어요'}
+              {profile ? (profile.email ?? maskPhone(profile.phone)) : '로그인하지 않았어요'}
             </p>
           </div>
-          {profile?.providerLabel && <Badge variant="secondary">{profile.providerLabel}</Badge>}
+          {profile && <Badge variant="secondary">{PROVIDER_LABEL[profile.provider]}</Badge>}
         </CardContent>
       </Card>
+
+      {profile && (
+        <Card size="sm">
+          <CardContent>
+            <dl className="grid grid-cols-[5rem_1fr] gap-y-2 text-sm">
+              <dt className="text-muted-foreground">휴대폰</dt>
+              <dd className="tabular-nums">{maskPhone(profile.phone)}</dd>
+              <dt className="text-muted-foreground">이메일</dt>
+              <dd className="truncate">{profile.email ?? '—'}</dd>
+              <dt className="text-muted-foreground">가입 방법</dt>
+              <dd>{PROVIDER_LABEL[profile.provider]}</dd>
+            </dl>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

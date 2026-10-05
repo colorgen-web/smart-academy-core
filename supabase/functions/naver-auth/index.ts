@@ -1,13 +1,23 @@
 // 네이버 로그인 → Supabase 세션 발급
-// 1) 네이버 code 로 access token 발급  2) 네이버 프로필(이메일) 조회
-// 3) 같은 이메일의 Supabase 사용자를 만들거나 재사용  4) 매직링크 token_hash 를 돌려줌
-//    → 클라이언트가 supabase.auth.verifyOtp({ token_hash, type: 'magiclink' }) 로 로그인
+// 네이버와 카카오는 서로 다른 계정이다. 네이버 계정은 이메일이 아니라 "네이버 ID"로 찾는다.
+// 1) 네이버 code 로 access token 발급  2) 네이버 프로필 조회
+// 3) naver_accounts 에서 네이버 ID → 계정(uuid) 조회, 없으면 새 계정 생성
+// 4) 매직링크 token_hash 를 돌려줌 → 클라이언트가 verifyOtp({ token_hash, type: 'magiclink' }) 로 로그인
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+// Supabase 는 이메일이 같은 계정을 자동으로 합치므로, 네이버 계정의 로그인용 주소는 실제 이메일과 겹치지 않는
+// 내부 주소를 쓴다 (메일은 보내지 않음). 실제 이메일은 app_metadata.naver_email → profiles.email 로 간다.
+// 네이버 ID 는 대소문자를 구분하지만 이메일은 구분하지 않으므로, ID 를 그대로 넣지 않고 SHA-256 해시(앞 40자리)를 쓴다.
+async function internalEmail(naverId: string) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(naverId))
+  const hex = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('')
+  return `naver_${hex.slice(0, 40)}@users.smart-academy.invalid`
 }
 
 function json(body: unknown, status = 200) {
@@ -54,12 +64,9 @@ Deno.serve(async (req) => {
     })
     const profile = await profileRes.json()
     const naver: NaverProfile | undefined = profile.response
-    if (profile.resultcode !== '00' || !naver) {
+    if (profile.resultcode !== '00' || !naver?.id) {
       console.error('naver profile error', profile)
       return json({ error: '네이버 프로필을 가져오지 못했습니다.' }, 401)
-    }
-    if (!naver.email) {
-      return json({ error: '네이버 이메일 제공 동의가 필요합니다.' }, 400)
     }
 
     const admin = createClient(
@@ -68,23 +75,55 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false, autoRefreshToken: false } },
     )
 
-    const { error: createError } = await admin.auth.admin.createUser({
-      email: naver.email,
-      email_confirm: true,
-      user_metadata: {
-        provider: 'naver',
-        naver_id: naver.id,
-        name: naver.name ?? naver.nickname,
-        avatar_url: naver.profile_image,
-      },
-    })
-    if (createError && createError.code !== 'email_exists' && createError.code !== 'user_already_exists') {
-      throw createError
+    const loginEmail = await internalEmail(naver.id)
+
+    const findLinkedUser = async () => {
+      const { data, error } = await admin
+        .from('naver_accounts')
+        .select('user_id')
+        .eq('naver_id', naver.id)
+        .maybeSingle()
+      if (error) throw error
+      return data?.user_id as string | undefined
+    }
+
+    if (!(await findLinkedUser())) {
+      const { data: created, error: createError } = await admin.auth.admin.createUser({
+        email: loginEmail,
+        email_confirm: true,
+        app_metadata: { naver_id: naver.id, naver_email: naver.email ?? null },
+        user_metadata: {
+          provider: 'naver',
+          name: naver.name ?? naver.nickname,
+          avatar_url: naver.profile_image,
+        },
+      })
+      if (created?.user) {
+        const { error: linkError } = await admin
+          .from('naver_accounts')
+          .insert({ naver_id: naver.id, user_id: created.user.id })
+        // 23505: 동시에 들어온 다른 요청이 먼저 연결함 → 아래에서 그 계정으로 로그인
+        if (linkError && linkError.code !== '23505') throw linkError
+      } else if (createError?.code !== 'email_exists' && createError?.code !== 'user_already_exists') {
+        throw createError
+      }
+      if (!(await findLinkedUser())) {
+        // 계정은 있는데 연결 기록이 없는 경우(이전 요청이 중간에 실패) → 내부 주소로 찾아 연결
+        const { data: link, error: linkErr } = await admin.auth.admin.generateLink({
+          type: 'magiclink',
+          email: loginEmail,
+        })
+        if (linkErr) throw linkErr
+        const { error: insertErr } = await admin
+          .from('naver_accounts')
+          .insert({ naver_id: naver.id, user_id: link.user.id })
+        if (insertErr && insertErr.code !== '23505') throw insertErr
+      }
     }
 
     const { data, error } = await admin.auth.admin.generateLink({
       type: 'magiclink',
-      email: naver.email,
+      email: loginEmail,
     })
     if (error) throw error
 
