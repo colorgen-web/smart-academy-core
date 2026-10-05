@@ -1,5 +1,7 @@
 import type { User } from '@supabase/supabase-js'
 import { LogIn, LogOut, Monitor, Moon, Sun, UserRound } from 'lucide-react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -22,7 +24,17 @@ type SettingsTabProps = {
 
 export function SettingsTab({ user, onLogin }: SettingsTabProps) {
   const { theme, setTheme } = useTheme()
+  const navigate = useNavigate()
   const profile = user ? getUserProfile(user) : null
+  const [signingOut, setSigningOut] = useState(false)
+
+  const handleSignOut = async () => {
+    if (!window.confirm('로그아웃할까요?')) return
+    setSigningOut(true)
+    // 다음 로그인은 홈에서 시작하도록 먼저 이동 (세션이 지워지면 로그인 화면으로 바뀐다)
+    navigate('/', { replace: true })
+    await signOut()
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -74,9 +86,9 @@ export function SettingsTab({ user, onLogin }: SettingsTabProps) {
       </Card>
 
       {user ? (
-        <Button variant="outline" size="lg" className="h-11" onClick={signOut}>
+        <Button variant="outline" size="lg" className="h-11" onClick={handleSignOut} disabled={signingOut}>
           <LogOut data-icon="inline-start" />
-          로그아웃
+          {signingOut ? '로그아웃 중…' : '로그아웃'}
         </Button>
       ) : (
         <Button size="lg" className="h-11" onClick={onLogin}>
