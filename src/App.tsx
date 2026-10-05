@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
 
+import { AppShell } from '@/components/layout/AppShell'
+import { TABS, type TabKey } from '@/components/layout/tabs'
 import { useAuth } from '@/hooks/useAuth'
+import '@/hooks/useTheme' // 테마 적용 + OS 다크모드 변경 구독 (모듈 로드 시 1회)
 import { completeNaverSignIn, NAVER_CALLBACK_PATH } from '@/lib/auth'
-import { GuestHomePage } from '@/pages/GuestHomePage'
-import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
+import { HomeTab } from '@/pages/tabs/HomeTab'
+import { AttendanceTab, ClassesTab, LockedTab, NoticesTab } from '@/pages/tabs/PlaceholderTabs'
+import { SettingsTab } from '@/pages/tabs/SettingsTab'
 
 function isNaverCallback() {
   return window.location.pathname === NAVER_CALLBACK_PATH
@@ -13,6 +17,7 @@ function isNaverCallback() {
 function App() {
   const { session, loading } = useAuth()
   const [guest, setGuest] = useState(false)
+  const [tab, setTab] = useState<TabKey>('home')
   const [naverPending, setNaverPending] = useState(isNaverCallback)
   const [authError, setAuthError] = useState<string | null>(null)
 
@@ -34,9 +39,51 @@ function App() {
     )
   }
 
-  if (session) return <HomePage user={session.user} />
-  if (guest) return <GuestHomePage onLogin={() => setGuest(false)} />
-  return <LoginPage onGuest={() => setGuest(true)} error={authError} />
+  const user = session?.user ?? null
+  if (!user && !guest) {
+    return (
+      <LoginPage
+        onGuest={() => {
+          setTab('home')
+          setGuest(true)
+        }}
+        error={authError}
+      />
+    )
+  }
+
+  const isGuest = !user
+  const goLogin = () => setGuest(false)
+  const current = TABS.find((t) => t.key === tab)!
+
+  let content
+  if (isGuest && !current.guest) {
+    content = <LockedTab label={current.label} onLogin={goLogin} />
+  } else {
+    switch (tab) {
+      case 'home':
+        content = <HomeTab user={user} onLogin={goLogin} />
+        break
+      case 'attendance':
+        content = <AttendanceTab />
+        break
+      case 'classes':
+        content = <ClassesTab />
+        break
+      case 'notices':
+        content = <NoticesTab />
+        break
+      case 'settings':
+        content = <SettingsTab user={user} onLogin={goLogin} />
+        break
+    }
+  }
+
+  return (
+    <AppShell active={tab} onTabChange={setTab} isGuest={isGuest}>
+      {content}
+    </AppShell>
+  )
 }
 
 export default App

@@ -1,6 +1,8 @@
 # smart-academy-core
 
-Smart Academy 코어 프로젝트 (React + Vite + TypeScript)
+Smart Academy 코어 프로젝트 (React + Vite + TypeScript + Tailwind + shadcn/ui)
+
+디자인 규칙(색상 토큰, 라이트/다크, 레이아웃)은 [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) 참고.
 
 ## 시작하기
 
