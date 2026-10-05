@@ -85,3 +85,8 @@ export function completeNaverSignIn() {
 export async function signOut() {
   await supabase?.auth.signOut()
 }
+
+/** 관리자 여부 (화면 표시용). 실제 권한은 DB 의 RLS(is_admin)가 검사한다. */
+export function isAdmin(user: { app_metadata?: Record<string, unknown> } | null | undefined) {
+  return user?.app_metadata?.role === 'admin'
+}

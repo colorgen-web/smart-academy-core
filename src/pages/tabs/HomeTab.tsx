@@ -2,6 +2,7 @@ import type { User } from '@supabase/supabase-js'
 import { Bell, CalendarDays, ClipboardCheck, LogIn } from 'lucide-react'
 import { useState } from 'react'
 
+import { LatestAnnouncements } from '@/components/announcements/LatestAnnouncements'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { getUserProfile } from '@/lib/user'
@@ -61,6 +62,8 @@ export function HomeTab({ user, onLogin }: HomeTabProps) {
           </Card>
         ))}
       </section>
+
+      <LatestAnnouncements />
     </div>
   )
 }

@@ -1,18 +1,18 @@
 import type { ReactNode } from 'react'
+import { useLocation } from 'react-router'
 
 import { BottomNav } from '@/components/layout/BottomNav'
-import { TABS, type TabKey } from '@/components/layout/tabs'
+import { tabFromPath } from '@/components/layout/tabs'
 
 type AppShellProps = {
-  active: TabKey
-  onTabChange: (tab: TabKey) => void
   isGuest: boolean
   children: ReactNode
 }
 
 /** 상단 헤더 + 내용 + 하단 탭. 모든 로그인 이후 화면(및 게스트 둘러보기)의 공통 틀 */
-export function AppShell({ active, onTabChange, isGuest, children }: AppShellProps) {
-  const title = TABS.find((tab) => tab.key === active)?.label
+export function AppShell({ isGuest, children }: AppShellProps) {
+  const { pathname } = useLocation()
+  const tab = tabFromPath(pathname)
 
   return (
     <div className="min-h-svh">
@@ -20,7 +20,7 @@ export function AppShell({ active, onTabChange, isGuest, children }: AppShellPro
         <div className="mx-auto flex h-14 max-w-screen-sm items-center gap-2 px-4">
           <img src="/favicon.svg" alt="" className="size-7" />
           <span className="font-semibold">Smart Academy</span>
-          {active !== 'home' && <span className="text-muted-foreground">· {title}</span>}
+          {tab.key !== 'home' && <span className="text-muted-foreground">· {tab.label}</span>}
         </div>
       </header>
 
@@ -28,7 +28,7 @@ export function AppShell({ active, onTabChange, isGuest, children }: AppShellPro
         {children}
       </main>
 
-      <BottomNav active={active} onChange={onTabChange} isGuest={isGuest} />
+      <BottomNav isGuest={isGuest} />
     </div>
   )
 }

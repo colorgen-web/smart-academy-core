@@ -64,3 +64,24 @@ Supabase 대시보드 > Authentication > URL Configuration 의 Redirect URLs에
 
 - 네이버 사용자는 이메일로 Supabase 계정에 연결됩니다. 같은 이메일로 카카오 로그인한 계정이 있으면 같은 계정으로 로그인됩니다.
 - 게스트 둘러보기는 로그인 없이 화면만 보여 줍니다 (세션 없음).
+
+## 공지사항
+
+- 메인 화면: 최신 5개 (고정 공지 먼저) + 전체보기
+- 전체 목록 `/announcements?page=N`: 10개씩, 페이지 번호는 5개 단위로 묶어서 표시
+- 상세 `/announcements/:id`, 관리자 글쓰기 `/announcements/new`
+
+### 1. 테이블 만들기
+Supabase 대시보드 > **SQL Editor** 에서 `supabase/migrations/20261005000000_announcements.sql` 내용을 실행합니다.
+(누구나 읽기 가능, 작성·삭제는 관리자만 — RLS 로 DB 가 직접 막습니다)
+
+### 2. 관리자 지정
+SQL Editor 에서 관리자로 쓸 계정의 이메일로 실행합니다. 한 번 로그아웃 후 다시 로그인해야 적용됩니다.
+
+```sql
+update auth.users
+set raw_app_meta_data = raw_app_meta_data || '{"role": "admin"}'
+where email = '관리자@이메일.com';
+```
+
+관리자로 로그인하면 공지사항 목록에 **글쓰기**, 상세 화면에 **삭제** 버튼이 보입니다.
