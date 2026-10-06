@@ -8,6 +8,10 @@ import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
 import '@/hooks/useTheme' // 테마 적용 + OS 다크모드 변경 구독 (모듈 로드 시 1회)
 import { completeNaverSignIn, isAdmin as checkAdmin, NAVER_CALLBACK_PATH } from '@/lib/auth'
+import { AcademyDetailPage } from '@/pages/academies/AcademyDetailPage'
+import { AcademyJoinPage } from '@/pages/academies/AcademyJoinPage'
+import { AcademyRegisterPage } from '@/pages/academies/AcademyRegisterPage'
+import { AdminAcademiesPage } from '@/pages/admin/AdminAcademiesPage'
 import { AnnouncementDetailPage } from '@/pages/announcements/AnnouncementDetailPage'
 import { AnnouncementsPage } from '@/pages/announcements/AnnouncementsPage'
 import { AnnouncementWritePage } from '@/pages/announcements/AnnouncementWritePage'
@@ -92,6 +96,22 @@ function App() {
           element={isAdmin ? <AnnouncementWritePage /> : <Navigate to="/announcements" replace />}
         />
         <Route path="announcements/:id" element={<AnnouncementDetailPage isAdmin={isAdmin} />} />
+        {/* 학원: 로그인(회원가입 완료) 사용자만 */}
+        <Route
+          path="academies/join"
+          element={profile ? <AcademyJoinPage profile={profile} /> : <LockedTab label="학원 가입" onLogin={goLogin} />}
+        />
+        <Route
+          path="academies/new"
+          element={
+            profile?.member_type === 'director' ? <AcademyRegisterPage /> : <Navigate to="/" replace />
+          }
+        />
+        <Route
+          path="academies/:id"
+          element={user ? <AcademyDetailPage userId={user.id} /> : <LockedTab label="학원" onLogin={goLogin} />}
+        />
+        <Route path="admin/academies" element={isAdmin ? <AdminAcademiesPage /> : <Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AppShell>

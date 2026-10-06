@@ -1,7 +1,7 @@
 import type { User } from '@supabase/supabase-js'
-import { LogIn, LogOut, Monitor, Moon, Sun, UserRound } from 'lucide-react'
+import { ChevronRight, LogIn, LogOut, Monitor, Moon, School, Sun, UserRound } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -74,6 +74,24 @@ export function SettingsTab({ user, profile, isAdmin, onLogin }: SettingsTabProp
               <dt className="text-muted-foreground">가입 방법</dt>
               <dd>{PROVIDER_LABEL[profile.provider]}</dd>
             </dl>
+          </CardContent>
+        </Card>
+      )}
+
+      {isAdmin && (
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle>운영자 메뉴</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Link
+              to="/admin/academies"
+              className="-mx-2 flex items-center gap-2 rounded-lg px-2 py-2 text-sm hover:bg-muted"
+            >
+              <School className="size-4 text-primary" />
+              <span className="flex-1">학원 승인 관리</span>
+              <ChevronRight className="size-4 text-muted-foreground" />
+            </Link>
           </CardContent>
         </Card>
       )}

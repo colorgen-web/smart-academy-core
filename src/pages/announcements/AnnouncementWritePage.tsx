@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { createAnnouncement } from '@/lib/announcements'
+import { inputClass } from '@/lib/styles'
 
 const TITLE_MAX = 200
 
@@ -35,8 +36,7 @@ export function AnnouncementWritePage() {
     }
   }
 
-  const fieldClass =
-    'w-full rounded-lg border border-input bg-background px-3 py-2 text-[15px] outline-none transition-shadow placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30'
+  const fieldClass = `${inputClass} h-auto py-2`
 
   return (
     <div>

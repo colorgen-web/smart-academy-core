@@ -2,6 +2,7 @@ import type { User } from '@supabase/supabase-js'
 import { ChevronDown, GraduationCap, Presentation, School, UsersRound, type LucideIcon } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 
+import { Field } from '@/components/Field'
 import { KakaoIcon, NaverIcon } from '@/components/icons/social'
 import { Button } from '@/components/ui/button'
 import { signOut } from '@/lib/auth'
@@ -18,6 +19,7 @@ import {
   type MemberType,
   type Profile,
 } from '@/lib/profile'
+import { inputClass } from '@/lib/styles'
 import { cn } from '@/lib/utils'
 
 const MEMBER_TYPES: { value: MemberType; icon: LucideIcon; hint: string }[] = [
@@ -216,8 +218,6 @@ export function SignupPage({ user, onComplete }: SignupPageProps) {
   )
 }
 
-const inputClass =
-  'h-11 w-full rounded-lg border border-input bg-background px-3 text-[15px] outline-none transition-shadow placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 aria-invalid:border-destructive'
 const checkboxClass = 'size-5 shrink-0 accent-primary'
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -226,16 +226,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
       <h2 className="font-semibold">{title}</h2>
       {children}
     </section>
-  )
-}
-
-function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium">{label}</span>
-      {children}
-      {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
-    </label>
   )
 }
 

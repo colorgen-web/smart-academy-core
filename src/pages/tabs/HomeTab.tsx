@@ -1,6 +1,7 @@
 import { Bell, CalendarDays, ClipboardCheck, LogIn } from 'lucide-react'
 import { useState } from 'react'
 
+import { MyAcademies } from '@/components/academies/MyAcademies'
 import { LatestAnnouncements } from '@/components/announcements/LatestAnnouncements'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -62,6 +63,8 @@ export function HomeTab({ profile, onLogin }: HomeTabProps) {
           </Card>
         ))}
       </section>
+
+      {profile && <MyAcademies profile={profile} />}
 
       <LatestAnnouncements />
     </div>
