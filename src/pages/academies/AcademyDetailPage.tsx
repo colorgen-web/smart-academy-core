@@ -1,4 +1,4 @@
-import { Check, Copy, MapPin, Phone, RefreshCw, X } from 'lucide-react'
+import { BookOpen, Check, ChevronRight, Copy, MapPin, Phone, RefreshCw, UsersRound, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 
@@ -116,6 +116,23 @@ export function AcademyDetailPage({ userId }: { userId: string }) {
       {academy.status === 'approved' && membership?.status === 'rejected' && (
         <Notice tone="destructive">가입 신청이 승인되지 않았어요. 학원에 문의해 주세요.</Notice>
       )}
+
+      {academy.status === 'approved' &&
+        membership?.status === 'approved' &&
+        (membership.role === 'director' || membership.role === 'teacher') && (
+          <Card className="gap-0 py-0">
+            <Link to="/classes" className="flex items-center gap-3 border-b px-4 py-3 hover:bg-muted/60">
+              <BookOpen className="size-4 text-primary" />
+              <span className="flex-1 font-medium">반·시간표</span>
+              <ChevronRight className="size-4 text-muted-foreground" />
+            </Link>
+            <Link to={`/academies/${academy.id}/students`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/60">
+              <UsersRound className="size-4 text-primary" />
+              <span className="flex-1 font-medium">학생 명단</span>
+              <ChevronRight className="size-4 text-muted-foreground" />
+            </Link>
+          </Card>
+        )}
 
       {isDirector && <DirectorPanel academy={academy} />}
     </div>

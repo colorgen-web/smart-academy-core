@@ -11,6 +11,10 @@ import { completeNaverSignIn, isAdmin as checkAdmin, NAVER_CALLBACK_PATH } from 
 import { AcademyDetailPage } from '@/pages/academies/AcademyDetailPage'
 import { AcademyJoinPage } from '@/pages/academies/AcademyJoinPage'
 import { AcademyRegisterPage } from '@/pages/academies/AcademyRegisterPage'
+import { StudentsPage } from '@/pages/academies/StudentsPage'
+import { AttendanceCheckPage } from '@/pages/classes/AttendanceCheckPage'
+import { ClassDetailPage } from '@/pages/classes/ClassDetailPage'
+import { ClassFormPage } from '@/pages/classes/ClassFormPage'
 import { AdminAcademiesPage } from '@/pages/admin/AdminAcademiesPage'
 import { AnnouncementDetailPage } from '@/pages/announcements/AnnouncementDetailPage'
 import { AnnouncementsPage } from '@/pages/announcements/AnnouncementsPage'
@@ -18,7 +22,9 @@ import { AnnouncementWritePage } from '@/pages/announcements/AnnouncementWritePa
 import { LoginPage } from '@/pages/LoginPage'
 import { SignupPage } from '@/pages/SignupPage'
 import { HomeTab } from '@/pages/tabs/HomeTab'
-import { AttendanceTab, ClassesTab, LockedTab, NoticesTab } from '@/pages/tabs/PlaceholderTabs'
+import { AttendanceTab } from '@/pages/tabs/AttendanceTab'
+import { ClassesTab } from '@/pages/tabs/ClassesTab'
+import { LockedTab, NoticesTab } from '@/pages/tabs/PlaceholderTabs'
 import { SettingsTab } from '@/pages/tabs/SettingsTab'
 
 function isNaverCallback() {
@@ -86,8 +92,8 @@ function App() {
     <AppShell isGuest={isGuest}>
       <Routes>
         <Route index element={<HomeTab profile={profile ?? null} onLogin={goLogin} />} />
-        <Route path="attendance" element={tabElement('attendance', <AttendanceTab />)} />
-        <Route path="classes" element={tabElement('classes', <ClassesTab />)} />
+        <Route path="attendance" element={tabElement('attendance', user ? <AttendanceTab userId={user.id} /> : <></>)} />
+        <Route path="classes" element={tabElement('classes', user ? <ClassesTab userId={user.id} /> : <></>)} />
         <Route path="notices" element={tabElement('notices', <NoticesTab />)} />
         <Route path="settings" element={<SettingsTab user={user} profile={profile ?? null} isAdmin={isAdmin} onLogin={goLogin} />} />
         <Route path="announcements" element={<AnnouncementsPage isAdmin={isAdmin} />} />
@@ -110,6 +116,21 @@ function App() {
         <Route
           path="academies/:id"
           element={user ? <AcademyDetailPage userId={user.id} /> : <LockedTab label="학원" onLogin={goLogin} />}
+        />
+        <Route
+          path="academies/:id/students"
+          element={user ? <StudentsPage userId={user.id} /> : <LockedTab label="학생 명단" onLogin={goLogin} />}
+        />
+        {/* 반·출석: 권한은 DB 가 확인하고, 화면은 역할에 맞게 버튼을 숨긴다 */}
+        <Route path="academies/:academyId/classes/new" element={user ? <ClassFormPage /> : <Navigate to="/" replace />} />
+        <Route path="classes/:id/edit" element={user ? <ClassFormPage /> : <Navigate to="/" replace />} />
+        <Route
+          path="classes/:id/attendance"
+          element={user ? <AttendanceCheckPage /> : <LockedTab label="출석 체크" onLogin={goLogin} />}
+        />
+        <Route
+          path="classes/:id"
+          element={user ? <ClassDetailPage userId={user.id} /> : <LockedTab label="반" onLogin={goLogin} />}
         />
         <Route path="admin/academies" element={isAdmin ? <AdminAcademiesPage /> : <Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />

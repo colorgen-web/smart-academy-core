@@ -1,17 +1,9 @@
-import { Bell, BookOpen, ClipboardCheck, Lock } from 'lucide-react'
+import { Bell, Lock } from 'lucide-react'
 
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/button'
 
-// 각 탭의 실제 화면은 데이터 설계(학원/반/수업/출석) 후 채운다
-
-export function AttendanceTab() {
-  return <EmptyState icon={ClipboardCheck} title="출석 기록이 없어요" description="수업이 등록되면 여기서 출석을 체크할 수 있어요." />
-}
-
-export function ClassesTab() {
-  return <EmptyState icon={BookOpen} title="등록된 수업이 없어요" description="반과 수업 일정이 여기에 표시돼요." />
-}
+// 알림 탭은 아직 준비 중
 
 export function NoticesTab() {
   return <EmptyState icon={Bell} title="새 알림이 없어요" description="학원 공지와 출결 알림이 여기에 모여요." />

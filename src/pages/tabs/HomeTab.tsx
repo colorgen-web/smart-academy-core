@@ -1,9 +1,10 @@
-import { Bell, CalendarDays, ClipboardCheck, LogIn } from 'lucide-react'
+import { LogIn } from 'lucide-react'
 import { useState } from 'react'
 
 import { MyAcademies } from '@/components/academies/MyAcademies'
 import { LatestAnnouncements } from '@/components/announcements/LatestAnnouncements'
 import { Button } from '@/components/ui/button'
+import { HomeSummary } from '@/components/HomeSummary'
 import { Card, CardContent } from '@/components/ui/card'
 import type { Profile } from '@/lib/profile'
 
@@ -12,13 +13,6 @@ type HomeTabProps = {
   profile: Profile | null
   onLogin: () => void
 }
-
-// 데이터 연결 전이라 값은 '—' 로 표시한다 (학원/수업 테이블 설계 후 연결)
-const SUMMARY = [
-  { label: '오늘 수업', icon: CalendarDays, tone: 'bg-accent text-accent-foreground' },
-  { label: '이번 주 출석', icon: ClipboardCheck, tone: 'bg-success/15 text-success' },
-  { label: '새 알림', icon: Bell, tone: 'bg-warning/25 text-warning-foreground dark:text-warning' },
-]
 
 export function HomeTab({ profile, onLogin }: HomeTabProps) {
   const name = profile?.name ?? null
@@ -50,19 +44,7 @@ export function HomeTab({ profile, onLogin }: HomeTabProps) {
         </Card>
       )}
 
-      <section className="grid grid-cols-3 gap-3">
-        {SUMMARY.map(({ label, icon: Icon, tone }) => (
-          <Card key={label} size="sm">
-            <CardContent className="flex flex-col gap-2">
-              <span className={`flex size-8 items-center justify-center rounded-lg ${tone}`}>
-                <Icon className="size-4" />
-              </span>
-              <span className="text-xs text-muted-foreground">{label}</span>
-              <span className="text-xl font-semibold">—</span>
-            </CardContent>
-          </Card>
-        ))}
-      </section>
+      <HomeSummary userId={profile?.id} />
 
       {profile && <MyAcademies profile={profile} />}
 

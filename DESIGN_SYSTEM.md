@@ -26,7 +26,8 @@
 | `bg-accent` / `text-accent-foreground` | 옅은 파랑 / 진한 파랑 | 어두운 파랑 / 밝은 파랑 | 아이콘 배경, 강조 칩 |
 | `bg-success` / `text-success-foreground` | 초록 `#008240` / 흰색 | 밝은 초록 / 짙은 초록 | 출석·완료 |
 | `bg-warning` / `text-warning-foreground` | 노랑 `#fac547` / 짙은 갈색 | 같음 | 주의·새 알림 (노란 면 위 글씨는 항상 짙은 색) |
-| `bg-destructive` / `text-destructive` | 빨강 | 밝은 빨강 | 오류, 삭제 |
+| `bg-destructive` / `text-destructive-foreground` | 빨강 / 흰색 | 밝은 빨강 / 짙은 적갈색 | 오류, 삭제, 결석 (색 면) |
+| `text-destructive` | 빨강 | 밝은 빨강 | 오류 문구, 옅은 틴트 위 글씨 |
 | `border-border`, `ring-ring` | | | 테두리, 포커스 링 |
 
 > 모든 "글씨 / 배경" 조합은 **WCAG AA 4.5:1 이상**으로 맞춰 두었습니다. 토큰 값을 바꾸면 대비를 다시 계산하세요.
