@@ -20,10 +20,11 @@ const THEME_OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
 type SettingsTabProps = {
   user: User | null
   profile: Profile | null
+  isAdmin: boolean
   onLogin: () => void
 }
 
-export function SettingsTab({ user, profile, onLogin }: SettingsTabProps) {
+export function SettingsTab({ user, profile, isAdmin, onLogin }: SettingsTabProps) {
   const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
   const avatarUrl = user ? socialInfo(user).avatarUrl : undefined
@@ -52,6 +53,7 @@ export function SettingsTab({ user, profile, onLogin }: SettingsTabProps) {
             <p className="flex items-center gap-1.5 font-semibold">
               <span className="truncate">{profile?.name ?? '게스트'}</span>
               {profile && <Badge variant="outline">{MEMBER_TYPE_LABEL[profile.member_type]}</Badge>}
+              {isAdmin && <Badge>관리자</Badge>}
             </p>
             <p className="truncate text-sm text-muted-foreground">
               {profile ? (profile.email ?? maskPhone(profile.phone)) : '로그인하지 않았어요'}

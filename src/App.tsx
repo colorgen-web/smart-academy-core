@@ -85,7 +85,7 @@ function App() {
         <Route path="attendance" element={tabElement('attendance', <AttendanceTab />)} />
         <Route path="classes" element={tabElement('classes', <ClassesTab />)} />
         <Route path="notices" element={tabElement('notices', <NoticesTab />)} />
-        <Route path="settings" element={<SettingsTab user={user} profile={profile ?? null} onLogin={goLogin} />} />
+        <Route path="settings" element={<SettingsTab user={user} profile={profile ?? null} isAdmin={isAdmin} onLogin={goLogin} />} />
         <Route path="announcements" element={<AnnouncementsPage isAdmin={isAdmin} />} />
         <Route
           path="announcements/new"
