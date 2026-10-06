@@ -23,6 +23,7 @@ import { AnnouncementsPage } from '@/pages/announcements/AnnouncementsPage'
 import { AnnouncementWritePage } from '@/pages/announcements/AnnouncementWritePage'
 import { LoginPage } from '@/pages/LoginPage'
 import { SignupPage } from '@/pages/SignupPage'
+import { WithdrawPage } from '@/pages/WithdrawPage'
 import { HomeTab } from '@/pages/tabs/HomeTab'
 import { AttendanceTab } from '@/pages/tabs/AttendanceTab'
 import { ClassesTab } from '@/pages/tabs/ClassesTab'
@@ -40,6 +41,7 @@ function App() {
   const [guest, setGuest] = useState(false)
   const [naverPending, setNaverPending] = useState(isNaverCallback)
   const [authError, setAuthError] = useState<string | null>(null)
+  const [loginNotice, setLoginNotice] = useState<string | null>(null)
   const user = session?.user ?? null
   const { profile, error: profileError, setProfile, reload: reloadProfile } = useProfile(user?.id)
 
@@ -54,7 +56,7 @@ function App() {
   }, [navigate])
 
   if (!user && !loading && !naverPending && !guest) {
-    return <LoginPage onGuest={() => setGuest(true)} error={authError} />
+    return <LoginPage onGuest={() => setGuest(true)} error={authError} notice={loginNotice} />
   }
 
   if (user && profileError) {
@@ -99,6 +101,21 @@ function App() {
           <Route path="attendance" element={tabElement('attendance', user ? <AttendanceTab userId={user.id} /> : <></>)} />
           <Route path="classes" element={tabElement('classes', user ? <ClassesTab userId={user.id} /> : <></>)} />
           <Route path="notices" element={tabElement('notices', user ? <NotificationsTab userId={user.id} /> : <></>)} />
+          <Route
+            path="settings/withdraw"
+            element={
+              user ? (
+                <WithdrawPage
+                  onDone={() => {
+                    setLoginNotice('탈퇴가 완료되었어요. 그동안 이용해 주셔서 감사합니다.')
+                    navigate('/', { replace: true })
+                  }}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
           <Route path="settings" element={<SettingsTab user={user} profile={profile ?? null} isAdmin={isAdmin} onLogin={goLogin} />} />
           <Route path="announcements" element={<AnnouncementsPage isAdmin={isAdmin} />} />
           <Route

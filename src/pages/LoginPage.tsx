@@ -9,9 +9,11 @@ type LoginPageProps = {
   onGuest: () => void
   /** 네이버 콜백 실패 등 바깥에서 넘겨주는 오류 */
   error?: string | null
+  /** 탈퇴 완료 등 안내 */
+  notice?: string | null
 }
 
-export function LoginPage({ onGuest, error }: LoginPageProps) {
+export function LoginPage({ onGuest, error, notice: outerNotice }: LoginPageProps) {
   const [notice, setNotice] = useState<string | null>(null)
   const [pending, setPending] = useState<SocialProvider | null>(null)
 
@@ -32,6 +34,11 @@ export function LoginPage({ onGuest, error }: LoginPageProps) {
   return (
     <main className="flex min-h-svh items-center justify-center bg-muted/40 px-4 py-10">
       <section className="w-full max-w-sm rounded-2xl border bg-card p-8 text-card-foreground shadow-sm">
+        {outerNotice && (
+          <p role="status" className="mb-6 rounded-lg bg-success/15 px-3 py-2 text-center text-sm text-success">
+            {outerNotice}
+          </p>
+        )}
         <header className="mb-8 flex flex-col items-center gap-3 text-center">
           <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
             <GraduationCap className="size-7" />

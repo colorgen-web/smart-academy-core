@@ -7,6 +7,7 @@ import {
   School,
   Send,
   Trash2,
+  UserMinus,
   UserPlus,
   UserRoundCheck,
   type LucideIcon,
@@ -38,6 +39,7 @@ const ICON: Record<NotificationType, { icon: LucideIcon; tone: string }> = {
   academy_request: { icon: School, tone: 'bg-warning/25 text-warning-foreground dark:text-warning' },
   academy_review: { icon: School, tone: 'bg-accent text-accent-foreground' },
   academy_message: { icon: Megaphone, tone: 'bg-warning/25 text-warning-foreground dark:text-warning' },
+  member_left: { icon: UserMinus, tone: 'bg-muted text-muted-foreground' },
 }
 
 /** 알림 탭: 최신순 목록, 누르면 읽음 처리 후 관련 화면으로 */

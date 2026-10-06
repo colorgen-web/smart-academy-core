@@ -137,6 +137,15 @@ export function SettingsTab({ user, profile, isAdmin, onLogin }: SettingsTabProp
       )}
 
       <p className="text-center text-xs text-muted-foreground">Smart Academy v{__APP_VERSION__}</p>
+
+      {user && (
+        <Link
+          to="/settings/withdraw"
+          className="self-center text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        >
+          회원 탈퇴
+        </Link>
+      )}
     </div>
   )
 }
