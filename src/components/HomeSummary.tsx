@@ -4,12 +4,14 @@ import { Link } from 'react-router'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAsync } from '@/hooks/useAsync'
 import { useMySchedule } from '@/hooks/useMySchedule'
+import { useUnread } from '@/hooks/useUnread'
 import { classesOnWeekday, fetchAttendance } from '@/lib/classes'
 import { todayKST, weekdayOf, weekRange } from '@/lib/date'
 
 /** 홈 요약 카드: 오늘 수업 / 이번 주 출석(가족) 또는 운영 중인 반(원장·강사) / 새 알림 */
 export function HomeSummary({ userId }: { userId?: string }) {
   const schedule = useMySchedule(userId)
+  const { count: unread } = useUnread()
   const today = todayKST()
   const { start, end } = weekRange(today)
   const childIds = schedule.data?.children.map((c) => c.id) ?? []
@@ -36,7 +38,7 @@ export function HomeSummary({ userId }: { userId?: string }) {
   const items = [
     { label: '오늘 수업', value: todayCount, icon: CalendarDays, tone: 'bg-accent text-accent-foreground', to: '/classes' },
     { ...second, icon: ClipboardCheck, tone: 'bg-success/15 text-success', to: '/attendance' },
-    { label: '새 알림', value: '—', icon: Bell, tone: 'bg-warning/25 text-warning-foreground dark:text-warning', to: '/notices' },
+    { label: '새 알림', value: userId ? String(unread) : '—', icon: Bell, tone: 'bg-warning/25 text-warning-foreground dark:text-warning', to: '/notices' },
   ]
 
   return (

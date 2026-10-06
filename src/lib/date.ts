@@ -52,3 +52,17 @@ export function formatDayLabel(date: string) {
 export function formatTime(time: string) {
   return time.slice(0, 5)
 }
+
+/** 방금 전 / 5분 전 / 3시간 전 / 어제 / 10월 6일 */
+export function formatRelative(iso: string, now = Date.now()) {
+  const diff = Math.max(0, now - new Date(iso).getTime())
+  const minutes = Math.floor(diff / 60_000)
+  if (minutes < 1) return '방금 전'
+  if (minutes < 60) return `${minutes}분 전`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}시간 전`
+  const day = kstFormatter.format(new Date(iso))
+  if (day === addDays(kstFormatter.format(new Date(now)), -1)) return '어제'
+  const [, m, d] = day.split('-').map(Number)
+  return `${m}월 ${d}일`
+}

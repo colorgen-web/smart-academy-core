@@ -1,4 +1,4 @@
-import { BookOpen, Check, ChevronRight, Copy, MapPin, Phone, RefreshCw, UsersRound, X } from 'lucide-react'
+import { BookOpen, Check, ChevronRight, Copy, MapPin, Phone, RefreshCw, Send, UsersRound, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 
@@ -131,6 +131,13 @@ export function AcademyDetailPage({ userId }: { userId: string }) {
               <span className="flex-1 font-medium">학생 명단</span>
               <ChevronRight className="size-4 text-muted-foreground" />
             </Link>
+            {membership.role === 'director' && (
+              <Link to={`/academies/${academy.id}/message`} className="flex items-center gap-3 border-t px-4 py-3 hover:bg-muted/60">
+                <Send className="size-4 text-primary" />
+                <span className="flex-1 font-medium">회원에게 알림 보내기</span>
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </Link>
+            )}
           </Card>
         )}
 

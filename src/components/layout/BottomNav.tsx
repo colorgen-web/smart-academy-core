@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router'
 
 import { cn } from '@/lib/utils'
 import { tabFromPath, TABS } from '@/components/layout/tabs'
+import { useUnread } from '@/hooks/useUnread'
 
 type BottomNavProps = {
   isGuest: boolean
@@ -12,6 +13,7 @@ type BottomNavProps = {
 export function BottomNav({ isGuest }: BottomNavProps) {
   const navigate = useNavigate()
   const active = tabFromPath(useLocation().pathname).key
+  const { count: unread } = useUnread()
   return (
     <nav
       aria-label="주요 메뉴"
@@ -37,6 +39,14 @@ export function BottomNav({ isGuest }: BottomNavProps) {
                 )}
                 <span className="relative">
                   <Icon className="size-6" strokeWidth={selected ? 2.4 : 2} />
+                  {key === 'notices' && unread > 0 && (
+                    <span
+                      className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] leading-none font-bold text-destructive-foreground tabular-nums"
+                      aria-label={`읽지 않은 알림 ${unread}개`}
+                    >
+                      {unread > 99 ? '99+' : unread}
+                    </span>
+                  )}
                   {locked && (
                     <Lock
                       className="absolute -right-1.5 -bottom-1 size-3 rounded-full bg-background p-px"
