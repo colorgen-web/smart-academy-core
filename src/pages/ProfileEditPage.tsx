@@ -5,8 +5,10 @@ import { useNavigate } from 'react-router'
 import { Field } from '@/components/Field'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { MemberTypePicker } from '@/components/MemberTypePicker'
+import { PhoneVerifyField } from '@/components/PhoneVerifyField'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { usePhoneVerificationRequired } from '@/hooks/usePhoneVerificationRequired'
 import { errorMessage } from '@/lib/academies'
 import {
   formatPhone,
@@ -28,11 +30,21 @@ export function ProfileEditPage({ profile, onSaved }: { profile: Profile; onSave
   const [memberType, setMemberType] = useState<MemberType>(profile.member_type)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const verificationRequired = usePhoneVerificationRequired()
+  const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null)
 
   const digits = normalizePhone(phone)
   const phoneChanged = digits !== profile.phone
-  const changed = name.trim() !== profile.name || phoneChanged || memberType !== profile.member_type
-  const canSave = changed && name.trim().length > 0 && isValidPhone(digits) && !saving
+  const justVerified = verifiedPhone === digits
+  const phoneVerified = justVerified || (!phoneChanged && profile.phone_verified_at !== null)
+  // 인증 필수일 때 새 번호는 인증해야 저장할 수 있다. 지금 번호를 인증한 경우도 저장하면 인증된 번호가 된다.
+  const phoneOk = verificationRequired === false || (verificationRequired === true && (!phoneChanged || justVerified))
+  const changed =
+    name.trim() !== profile.name ||
+    phoneChanged ||
+    memberType !== profile.member_type ||
+    (justVerified && profile.phone_verified_at === null)
+  const canSave = changed && name.trim().length > 0 && isValidPhone(digits) && phoneOk && !saving
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -54,6 +66,9 @@ export function ProfileEditPage({ profile, onSaved }: { profile: Profile; onSave
             ? `이 번호는 다른 ${PROVIDER_LABEL[err.provider]} 계정에서 쓰고 있어요.`
             : '이미 다른 계정에서 쓰고 있는 번호예요.',
         )
+      } else if ((err as { code?: string }).code === 'P0001' && phoneChanged) {
+        setVerifiedPhone(null)
+        setError('휴대폰 인증이 만료됐어요. 다시 인증해 주세요.')
       } else {
         setError(errorMessage(err, '저장하지 못했어요. 잠시 후 다시 시도해 주세요.'))
       }
@@ -104,6 +119,16 @@ export function ProfileEditPage({ profile, onSaved }: { profile: Profile; onSave
                 className={inputClass}
               />
             </Field>
+            {verificationRequired && (
+              <>
+                {!phoneChanged && !phoneVerified && (
+                  <p className="-mt-2 text-xs text-muted-foreground">
+                    아직 인증하지 않은 번호예요. 인증하고 저장하면 인증된 번호가 돼요.
+                  </p>
+                )}
+                <PhoneVerifyField phone={digits} verified={phoneVerified} onVerified={setVerifiedPhone} />
+              </>
+            )}
             {phoneChanged && isValidPhone(digits) && (
               <p className="flex gap-2 rounded-lg bg-warning/25 px-3 py-2.5 text-xs leading-relaxed text-warning-foreground dark:text-warning">
                 <Info className="mt-0.5 size-3.5 shrink-0" />

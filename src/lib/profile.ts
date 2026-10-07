@@ -12,6 +12,8 @@ export type Profile = {
   member_type: MemberType
   provider: Provider
   email: string | null
+  /** 문자 인증한 번호면 인증 시각 (번호를 바꾸면 비워진다) */
+  phone_verified_at: string | null
   created_at: string
 }
 
@@ -27,7 +29,7 @@ export const PROVIDER_LABEL: Record<Provider, string> = {
   naver: '네이버',
 }
 
-const COLUMNS = 'id, name, phone, member_type, provider, email, created_at'
+const COLUMNS = 'id, name, phone, member_type, provider, email, phone_verified_at, created_at'
 
 function db() {
   if (!supabase) throw new Error('Supabase 설정이 없어요. .env 파일을 확인해 주세요.')
