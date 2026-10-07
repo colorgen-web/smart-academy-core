@@ -21,6 +21,8 @@ import { AdminAcademiesPage } from '@/pages/admin/AdminAcademiesPage'
 import { AnnouncementDetailPage } from '@/pages/announcements/AnnouncementDetailPage'
 import { AnnouncementsPage } from '@/pages/announcements/AnnouncementsPage'
 import { AnnouncementWritePage } from '@/pages/announcements/AnnouncementWritePage'
+import { PrivacyPage } from '@/pages/legal/PrivacyPage'
+import { TermsPage } from '@/pages/legal/TermsPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { SignupPage } from '@/pages/SignupPage'
 import { WithdrawPage } from '@/pages/WithdrawPage'
@@ -35,7 +37,18 @@ function isNaverCallback() {
   return window.location.pathname === NAVER_CALLBACK_PATH
 }
 
+/** 약관·처리방침은 로그인 없이 볼 수 있어야 하므로 로그인 확인보다 먼저 처리한다 */
 function App() {
+  return (
+    <Routes>
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="*" element={<MainApp />} />
+    </Routes>
+  )
+}
+
+function MainApp() {
   const navigate = useNavigate()
   const { session, loading } = useAuth()
   const [guest, setGuest] = useState(false)

@@ -136,6 +136,15 @@ export function SettingsTab({ user, profile, isAdmin, onLogin }: SettingsTabProp
         </Button>
       )}
 
+      <nav className="flex justify-center gap-4 text-xs text-muted-foreground">
+        <Link to="/terms" className="hover:text-foreground hover:underline">
+          이용약관
+        </Link>
+        <Link to="/privacy" className="font-semibold hover:text-foreground hover:underline">
+          개인정보 처리방침
+        </Link>
+      </nav>
+
       <p className="text-center text-xs text-muted-foreground">Smart Academy v{__APP_VERSION__}</p>
 
       {user && (
