@@ -138,6 +138,27 @@ where email = '관리자@이메일.com';
 - 카카오 쪽 앱 연결은 남을 수 있음 (사용자가 카카오 계정 설정에서 끊을 수 있음)
 - 마이그레이션: `supabase/migrations/20261010000000_account_deletion.sql` (notifications 다음에 실행)
 
+## 휴대폰 문자 인증
+
+인증번호 발송·확인은 Edge Function `phone-verify`, 인증 여부 확인은 DB 트리거가 한다.
+
+1. SQL Editor 에서 `supabase/migrations/20261011000000_phone_verification.sql` 실행 (**앱 배포 전에** 먼저)
+2. Edge Function `phone-verify` 배포 (`supabase/functions/phone-verify/index.ts`, **Verify JWT 끔** — 함수가 직접 로그인 토큰을 확인한다)
+3. Edge Functions → Secrets
+   - `SMS_PROVIDER`: `log`(문자를 보내지 않고 함수 로그에 인증번호만 남김, 테스트용) 또는 `solapi`
+   - `SOLAPI_API_KEY`, `SOLAPI_API_SECRET`, `SOLAPI_SENDER`(솔라피에 등록한 발신번호)
+   - `SMS_DAILY_LIMIT`(선택, 하루 전체 발송 상한, 기본 300), `PHONE_CODE_PEPPER`(선택)
+4. 인증 필수 켜기 (기본은 꺼짐 — 꺼져 있으면 인증 화면이 나오지 않고 예전처럼 동작)
+   ```sql
+   update public.app_settings set value = 'true' where key = 'phone_verification_required';
+   ```
+
+켜면
+
+- 회원가입과 휴대폰 번호 변경에 문자 인증이 필요하다 (인증 후 30분 안에 저장).
+- 학부모·학생의 자녀(본인) 연결과 출석 알림은 인증된 번호로만 된다. 기존 회원은 홈 배너·설정에서 지금 번호를 인증할 수 있다.
+- 제한: 인증번호 3분 유효, 5회 틀리면 다시 받기, 재요청 60초 간격, 한 계정·한 번호당 하루 5회. 인증 기록은 30일 뒤 지운다.
+
 ## 이용약관 · 개인정보 처리방침
 
 - `/terms`, `/privacy` — 로그인 없이 볼 수 있음 (카카오·네이버 앱 검수 시 이 주소를 등록)

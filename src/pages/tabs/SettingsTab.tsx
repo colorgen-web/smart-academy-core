@@ -1,11 +1,23 @@
 import type { User } from '@supabase/supabase-js'
-import { ChevronRight, LogIn, LogOut, Monitor, Moon, School, Sun, UserRound, UserRoundPen } from 'lucide-react'
+import {
+  ChevronRight,
+  LogIn,
+  LogOut,
+  Monitor,
+  Moon,
+  School,
+  ShieldCheck,
+  Sun,
+  UserRound,
+  UserRoundPen,
+} from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { usePhoneVerificationRequired } from '@/hooks/usePhoneVerificationRequired'
 import { useTheme, type Theme } from '@/hooks/useTheme'
 import { signOut } from '@/lib/auth'
 import { maskPhone, MEMBER_TYPE_LABEL, PROVIDER_LABEL, socialInfo, type Profile } from '@/lib/profile'
@@ -29,6 +41,8 @@ export function SettingsTab({ user, profile, isAdmin, onLogin }: SettingsTabProp
   const navigate = useNavigate()
   const avatarUrl = user ? socialInfo(user).avatarUrl : undefined
   const [signingOut, setSigningOut] = useState(false)
+  const verificationRequired = usePhoneVerificationRequired()
+  const needsVerification = verificationRequired === true && profile !== null && profile.phone_verified_at === null
 
   const handleSignOut = async () => {
     if (!window.confirm('로그아웃할까요?')) return
@@ -68,7 +82,16 @@ export function SettingsTab({ user, profile, isAdmin, onLogin }: SettingsTabProp
           <CardContent>
             <dl className="grid grid-cols-[5rem_1fr] gap-y-2 text-sm">
               <dt className="text-muted-foreground">휴대폰</dt>
-              <dd className="tabular-nums">{maskPhone(profile.phone)}</dd>
+              <dd className="flex items-center gap-1.5 tabular-nums">
+                {maskPhone(profile.phone)}
+                {profile.phone_verified_at ? (
+                  <Badge variant="outline" className="border-success/40 text-success">
+                    인증됨
+                  </Badge>
+                ) : (
+                  verificationRequired && <Badge variant="destructive">미인증</Badge>
+                )}
+              </dd>
               <dt className="text-muted-foreground">이메일</dt>
               <dd className="truncate">{profile.email ?? '—'}</dd>
               <dt className="text-muted-foreground">가입 방법</dt>
@@ -78,8 +101,12 @@ export function SettingsTab({ user, profile, isAdmin, onLogin }: SettingsTabProp
               to="/settings/profile"
               className="-mx-2 mt-2 flex items-center gap-2 rounded-lg border-t px-2 pt-3 text-sm font-medium hover:text-primary"
             >
-              <UserRoundPen className="size-4 text-primary" />
-              <span className="flex-1">회원 정보 수정</span>
+              {needsVerification ? (
+                <ShieldCheck className="size-4 text-primary" />
+              ) : (
+                <UserRoundPen className="size-4 text-primary" />
+              )}
+              <span className="flex-1">{needsVerification ? '휴대폰 인증하기' : '회원 정보 수정'}</span>
               <ChevronRight className="size-4 text-muted-foreground" />
             </Link>
           </CardContent>

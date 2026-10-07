@@ -5,7 +5,9 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { Field } from '@/components/Field'
 import { KakaoIcon, NaverIcon } from '@/components/icons/social'
 import { MemberTypePicker } from '@/components/MemberTypePicker'
+import { PhoneVerifyField } from '@/components/PhoneVerifyField'
 import { Button } from '@/components/ui/button'
+import { usePhoneVerificationRequired } from '@/hooks/usePhoneVerificationRequired'
 import { signOut } from '@/lib/auth'
 import {
   accountProvider,
@@ -38,10 +40,14 @@ export function SignupPage({ user, onComplete }: SignupPageProps) {
   const [agreed, setAgreed] = useState<Record<Agreement, boolean>>({ terms: false, privacy: false, age: false })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const verificationRequired = usePhoneVerificationRequired()
+  const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null)
 
   const digits = normalizePhone(phone)
+  const phoneOk = verificationRequired === false || (verificationRequired === true && verifiedPhone === digits)
   const allAgreed = agreed.terms && agreed.privacy && agreed.age
-  const canSubmit = name.trim().length > 0 && isValidPhone(digits) && memberType !== null && allAgreed && !saving
+  const canSubmit =
+    name.trim().length > 0 && isValidPhone(digits) && phoneOk && memberType !== null && allAgreed && !saving
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -65,6 +71,10 @@ export function SignupPage({ user, onComplete }: SignupPageProps) {
               ? `이 번호는 ${PROVIDER_LABEL[err.provider]}로 가입돼 있어요. ${PROVIDER_LABEL[err.provider]}로 로그인해 주세요.`
               : `이 번호는 다른 ${PROVIDER_LABEL[err.provider]} 계정으로 가입돼 있어요. 그 계정으로 로그인해 주세요.`,
         )
+      } else if ((err as { code?: string }).code === 'P0001') {
+        // 인증 후 30분이 지났거나 인증하지 않은 번호
+        setVerifiedPhone(null)
+        setError('휴대폰 인증이 만료됐어요. 다시 인증해 주세요.')
       } else {
         setError('가입하지 못했어요. 잠시 후 다시 시도해 주세요.')
       }
@@ -103,10 +113,16 @@ export function SignupPage({ user, onComplete }: SignupPageProps) {
               className={inputClass}
             />
           </Field>
-          <Field label="휴대폰 번호" hint="학원 연락과 중복 가입 확인에 사용해요.">
+          <Field
+            label="휴대폰 번호"
+            hint={verificationRequired ? '본인 확인과 학원 연락에 사용해요.' : '학원 연락과 중복 가입 확인에 사용해요.'}
+          >
             <input
               value={formatPhone(phone)}
-              onChange={(e) => setPhone(normalizePhone(e.target.value))}
+              onChange={(e) => {
+                setPhone(normalizePhone(e.target.value))
+                setError(null)
+              }}
               inputMode="numeric"
               autoComplete="tel-national"
               placeholder="010-1234-5678"
@@ -114,6 +130,9 @@ export function SignupPage({ user, onComplete }: SignupPageProps) {
               className={inputClass}
             />
           </Field>
+          {verificationRequired && (
+            <PhoneVerifyField phone={digits} verified={verifiedPhone === digits} onVerified={setVerifiedPhone} />
+          )}
         </Section>
 
         <Section title="회원 유형">
@@ -152,7 +171,7 @@ export function SignupPage({ user, onComplete }: SignupPageProps) {
                 <dt className="font-medium text-foreground">보유 기간</dt>
                 <dd>회원 탈퇴 시까지 (법령에 따라 보관이 필요한 경우 그 기간)</dd>
                 <dt className="font-medium text-foreground">처리 위탁·국외 이전</dt>
-                <dd>Supabase(데이터 저장, 서울 리전)·Vercel(호스팅), 미국 법인</dd>
+                <dd>Supabase(데이터 저장, 서울 리전)·Vercel(호스팅), 미국 법인 / (주)누리고(인증 문자 발송)</dd>
               </dl>
               <p className="mt-2">동의를 거부할 수 있으나, 거부하면 회원가입을 할 수 없어요.</p>
               <FullText to="/privacy" />
