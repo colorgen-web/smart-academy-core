@@ -1,5 +1,5 @@
 import type { User } from '@supabase/supabase-js'
-import { ChevronRight, LogIn, LogOut, Monitor, Moon, School, Sun, UserRound } from 'lucide-react'
+import { ChevronRight, LogIn, LogOut, Monitor, Moon, School, Sun, UserRound, UserRoundPen } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 
@@ -74,6 +74,14 @@ export function SettingsTab({ user, profile, isAdmin, onLogin }: SettingsTabProp
               <dt className="text-muted-foreground">가입 방법</dt>
               <dd>{PROVIDER_LABEL[profile.provider]}</dd>
             </dl>
+            <Link
+              to="/settings/profile"
+              className="-mx-2 mt-2 flex items-center gap-2 rounded-lg border-t px-2 pt-3 text-sm font-medium hover:text-primary"
+            >
+              <UserRoundPen className="size-4 text-primary" />
+              <span className="flex-1">회원 정보 수정</span>
+              <ChevronRight className="size-4 text-muted-foreground" />
+            </Link>
           </CardContent>
         </Card>
       )}

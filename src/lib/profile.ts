@@ -111,3 +111,21 @@ export async function createProfile(input: {
   if (error) throw error
   return data as Profile
 }
+
+/** 본인 회원 정보 수정 (이름·휴대폰·회원 유형만 바꿀 수 있다 — DB 권한도 같다) */
+export async function updateProfile(
+  id: string,
+  input: { name: string; phone: string; member_type: MemberType },
+  currentPhone: string,
+): Promise<Profile> {
+  if (input.phone !== currentPhone) {
+    const taken = await phoneSignupProvider(input.phone)
+    if (taken) throw new PhoneTakenError(taken)
+  }
+  const { data, error } = await db().from('profiles').update(input).eq('id', id).select(COLUMNS).single()
+  if (error?.code === '23505') {
+    throw new PhoneTakenError(await phoneSignupProvider(input.phone).catch(() => null))
+  }
+  if (error) throw error
+  return data as Profile
+}
