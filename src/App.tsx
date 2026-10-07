@@ -24,6 +24,7 @@ import { AnnouncementWritePage } from '@/pages/announcements/AnnouncementWritePa
 import { PrivacyPage } from '@/pages/legal/PrivacyPage'
 import { TermsPage } from '@/pages/legal/TermsPage'
 import { LoginPage } from '@/pages/LoginPage'
+import { ProfileEditPage } from '@/pages/ProfileEditPage'
 import { SignupPage } from '@/pages/SignupPage'
 import { WithdrawPage } from '@/pages/WithdrawPage'
 import { HomeTab } from '@/pages/tabs/HomeTab'
@@ -114,6 +115,10 @@ function MainApp() {
           <Route path="attendance" element={tabElement('attendance', user ? <AttendanceTab userId={user.id} /> : <></>)} />
           <Route path="classes" element={tabElement('classes', user ? <ClassesTab userId={user.id} /> : <></>)} />
           <Route path="notices" element={tabElement('notices', user ? <NotificationsTab userId={user.id} /> : <></>)} />
+          <Route
+            path="settings/profile"
+            element={profile ? <ProfileEditPage profile={profile} onSaved={setProfile} /> : <Navigate to="/" replace />}
+          />
           <Route
             path="settings/withdraw"
             element={
