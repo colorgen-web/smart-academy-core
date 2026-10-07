@@ -174,7 +174,8 @@ export function SignupPage({ user, onComplete }: SignupPageProps) {
               checked={agreed.terms}
               onChange={(v) => setAgreed((a) => ({ ...a, terms: v }))}
             >
-              이용약관 전문은 정식 서비스 오픈 전에 게시할 예정이에요.
+              학원 관리 서비스의 이용 조건, 회원·원장의 의무, 탈퇴와 이용 제한 등을 정해요.
+              <FullText to="/terms" />
             </AgreementItem>
             <AgreementItem
               label="개인정보 수집·이용"
@@ -183,13 +184,16 @@ export function SignupPage({ user, onComplete }: SignupPageProps) {
             >
               <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
                 <dt className="font-medium text-foreground">수집 항목</dt>
-                <dd>이름, 휴대폰 번호, 이메일, 회원 유형, 소셜 로그인 식별자</dd>
+                <dd>이름, 휴대폰 번호, 회원 유형, 소셜 로그인 식별자·이메일·프로필 사진</dd>
                 <dt className="font-medium text-foreground">이용 목적</dt>
-                <dd>회원 식별, 학원 서비스 제공, 공지·출결 등 연락</dd>
+                <dd>회원 식별, 학원 연결과 학원 관리 기능 제공, 출석·공지 등 알림</dd>
                 <dt className="font-medium text-foreground">보유 기간</dt>
                 <dd>회원 탈퇴 시까지 (법령에 따라 보관이 필요한 경우 그 기간)</dd>
+                <dt className="font-medium text-foreground">처리 위탁·국외 이전</dt>
+                <dd>Supabase(데이터 저장, 서울 리전)·Vercel(호스팅), 미국 법인</dd>
               </dl>
               <p className="mt-2">동의를 거부할 수 있으나, 거부하면 회원가입을 할 수 없어요.</p>
+              <FullText to="/privacy" />
             </AgreementItem>
             <AgreementItem label="만 14세 이상입니다" checked={agreed.age} onChange={(v) => setAgreed((a) => ({ ...a, age: v }))} />
           </div>
@@ -226,6 +230,15 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
       <h2 className="font-semibold">{title}</h2>
       {children}
     </section>
+  )
+}
+
+/** 약관 전문 보기 (회원가입 입력이 사라지지 않게 새 탭으로) */
+function FullText({ to }: { to: string }) {
+  return (
+    <a href={to} target="_blank" rel="noreferrer" className="mt-2 inline-block font-medium text-primary underline underline-offset-4">
+      전문 보기
+    </a>
   )
 }
 

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { GraduationCap } from 'lucide-react'
 
 import { KakaoIcon, NaverIcon } from '@/components/icons/social'
@@ -92,9 +93,16 @@ export function LoginPage({ onGuest, error, notice: outerNotice }: LoginPageProp
         </Button>
 
         <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">
-          로그인 시 서비스 이용약관 및 개인정보 처리방침에
+          처음 로그인하면 회원가입 화면에서
           <br />
-          동의한 것으로 간주합니다.
+          <Link to="/terms" className="underline underline-offset-2 hover:text-foreground">
+            이용약관
+          </Link>
+          과{' '}
+          <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground">
+            개인정보 처리방침
+          </Link>
+          에 동의를 받아요.
         </p>
       </section>
     </main>
