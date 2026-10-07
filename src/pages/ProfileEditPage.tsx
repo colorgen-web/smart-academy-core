@@ -94,7 +94,10 @@ export function ProfileEditPage({ profile, onSaved }: { profile: Profile; onSave
             <Field label="휴대폰 번호">
               <input
                 value={formatPhone(phone)}
-                onChange={(e) => setPhone(normalizePhone(e.target.value))}
+                onChange={(e) => {
+                  setPhone(normalizePhone(e.target.value))
+                  setError(null)
+                }}
                 inputMode="numeric"
                 autoComplete="tel-national"
                 aria-invalid={digits.length >= 10 && !isValidPhone(digits) ? true : undefined}
