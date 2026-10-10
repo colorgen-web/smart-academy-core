@@ -1,14 +1,24 @@
-import { BookOpen, ChevronRight, Plus, UsersRound } from 'lucide-react'
-import { useState } from 'react'
+import { BookOpen, ChevronRight, Gauge, PenLine, Plus, UsersRound } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 
 import { EmptyState } from '@/components/EmptyState'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { useAsync } from '@/hooks/useAsync'
 import { useMySchedule, type MySchedule } from '@/hooks/useMySchedule'
 import { classesOnWeekday, formatSchedules, type ClassInfo } from '@/lib/classes'
-import { formatTime, todayKST, WEEKDAY_LABEL, WEEKDAY_ORDER, weekdayOf } from '@/lib/date'
+import { addDays, formatDayLabel, formatTime, todayKST, WEEKDAY_LABEL, WEEKDAY_ORDER, weekdayOf } from '@/lib/date'
+import {
+  canRateDate,
+  FEEDBACK_DAYS,
+  fetchLessonFeedback,
+  fetchMyOwnStudentIds,
+  latestDateOfWeekday,
+  RATING_LABEL,
+  type LessonFeedback,
+} from '@/lib/feedback'
 import { cn } from '@/lib/utils'
 
 /** 수업 탭: 요일별 수업 + 내 학원 반 목록 */
@@ -16,6 +26,17 @@ export function ClassesTab({ userId }: { userId: string }) {
   const { data, loading, error, reload } = useMySchedule(userId)
   const today = weekdayOf(todayKST())
   const [day, setDay] = useState(today)
+  const childIds = data?.children.map((c) => c.id) ?? []
+  // 수업 이해도: 최근 7일 기록 + 학생 본인 연결 (준비 전이거나 실패하면 표시하지 않음)
+  const feedback = useAsync(async () => {
+    if (childIds.length === 0) return null
+    const day0 = todayKST()
+    const [records, ownIds] = await Promise.all([
+      fetchLessonFeedback({ studentIds: childIds, from: addDays(day0, -(FEEDBACK_DAYS - 1)), to: day0 }),
+      fetchMyOwnStudentIds(),
+    ])
+    return { records, ownIds }
+  }, [childIds.join(',')])
 
   if (loading) return <p className="py-10 text-center text-sm text-muted-foreground">불러오는 중…</p>
   if (error || !data) {
@@ -67,14 +88,16 @@ export function ClassesTab({ userId }: { userId: string }) {
         ))}
       </div>
 
-      <DayList data={data} day={day} />
+      <DayList data={data} day={day} feedback={feedback.data} />
 
       {hasStaff && <StaffClassList data={data} />}
     </div>
   )
 }
 
-function DayList({ data, day }: { data: MySchedule; day: number }) {
+type FeedbackData = { records: LessonFeedback[]; ownIds: number[] } | null | undefined
+
+function DayList({ data, day, feedback }: { data: MySchedule; day: number; feedback: FeedbackData }) {
   const childName = new Map(data.children.map((c) => [c.id, c.name]))
   const staffItems = classesOnWeekday(data.staffClasses, day)
   const familyItems = classesOnWeekday(
@@ -82,12 +105,18 @@ function DayList({ data, day }: { data: MySchedule; day: number }) {
     day,
   ).map((item) => ({
     ...item,
-    who: data.childClasses.find((c) => c.cls.id === item.cls.id)!.studentIds.map((id) => childName.get(id)).filter(Boolean),
+    studentIds: data.childClasses.find((c) => c.cls.id === item.cls.id)!.studentIds,
   }))
+  const date = latestDateOfWeekday(day)
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-semibold">{WEEKDAY_LABEL[day]}요일 수업</h2>
+      <h2 className="flex items-baseline gap-2 font-semibold">
+        {WEEKDAY_LABEL[day]}요일 수업
+        {familyItems.length > 0 && feedback && (
+          <span className="text-xs font-normal text-muted-foreground tabular-nums">{formatDayLabel(date)}</span>
+        )}
+      </h2>
       {staffItems.length === 0 && familyItems.length === 0 ? (
         <p className="rounded-xl bg-muted px-4 py-6 text-center text-sm text-muted-foreground">수업이 없는 날이에요.</p>
       ) : (
@@ -95,8 +124,24 @@ function DayList({ data, day }: { data: MySchedule; day: number }) {
           {staffItems.map(({ cls, schedule }) => (
             <ScheduleRow key={`s-${cls.id}-${schedule.start_time}`} cls={cls} time={schedule} />
           ))}
-          {familyItems.map(({ cls, schedule, who }) => (
-            <ScheduleRow key={`f-${cls.id}-${schedule.start_time}`} cls={cls} time={schedule} who={who as string[]} />
+          {familyItems.map(({ cls, schedule, studentIds }) => (
+            <ScheduleRow
+              key={`f-${cls.id}-${schedule.start_time}`}
+              cls={cls}
+              time={schedule}
+              who={studentIds.map((id) => childName.get(id)).filter((n): n is string => !!n)}
+              below={
+                feedback && (
+                  <FeedbackLine
+                    cls={cls}
+                    date={date}
+                    startTime={schedule.start_time}
+                    students={studentIds.map((id) => ({ id, name: childName.get(id) ?? '' }))}
+                    feedback={feedback}
+                  />
+                )
+              }
+            />
           ))}
         </ul>
       )}
@@ -108,16 +153,18 @@ function ScheduleRow({
   cls,
   time,
   who,
+  below,
 }: {
   cls: ClassInfo
   time: { start_time: string; end_time: string }
   who?: string[]
+  below?: ReactNode
 }) {
   return (
-    <li>
+    <li className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
       <Link
         to={`/classes/${cls.id}`}
-        className="flex items-center gap-3 rounded-xl bg-card px-4 py-3 ring-1 ring-foreground/10 transition-colors hover:bg-muted/60"
+        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/60"
       >
         <div className="w-14 shrink-0 text-center tabular-nums">
           <p className="font-semibold">{formatTime(time.start_time)}</p>
@@ -133,7 +180,79 @@ function ScheduleRow({
         {who && who.length > 0 && <Badge variant="secondary">{who.join(', ')}</Badge>}
         <ChevronRight className="size-4 text-muted-foreground" />
       </Link>
+      {below}
     </li>
+  )
+}
+
+/** 시간표 아래 수업 이해도: 학생 본인은 남기기·수정, 학부모는 자녀가 남긴 단계 */
+function FeedbackLine({
+  cls,
+  date,
+  startTime,
+  students,
+  feedback,
+}: {
+  cls: ClassInfo
+  date: string
+  startTime: string
+  students: { id: number; name: string }[]
+  feedback: NonNullable<FeedbackData>
+}) {
+  const today = todayKST()
+  // 오늘 수업은 시작한 뒤부터 남길 수 있게 보여 준다
+  const started = date < today || nowTimeKST() >= startTime.slice(0, 5)
+  if (!canRateDate(cls, date, today) || !started) return null
+
+  const lines = students.map((s) => {
+    const record = feedback.records.find((r) => r.class_id === cls.id && r.student_id === s.id && r.date === date)
+    return { ...s, record, isSelf: feedback.ownIds.includes(s.id) }
+  })
+  if (lines.every((l) => !l.record && !l.isSelf)) return null
+
+  return (
+    <div className="flex flex-col border-t">
+      {lines.map(({ id, name, record, isSelf }) =>
+        isSelf ? (
+          <Link
+            key={id}
+            to={`/classes/${cls.id}/feedback?date=${date}`}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-muted/60"
+          >
+            {record ? (
+              <>
+                <Gauge className="size-4 text-primary" />
+                <span className="flex-1">
+                  이해도 <span className="font-semibold">{record.rating}</span> · {RATING_LABEL[record.rating]}
+                </span>
+                <span className="text-xs text-muted-foreground">수정</span>
+              </>
+            ) : (
+              <>
+                <PenLine className="size-4 text-primary" />
+                <span className="flex-1 font-medium text-primary">수업 이해도 남기기</span>
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </>
+            )}
+          </Link>
+        ) : record ? (
+          <p key={id} className="flex items-center gap-2 px-4 py-2.5 text-sm">
+            <Gauge className="size-4 text-primary" />
+            <span className="flex-1">
+              {students.length > 1 && <span className="font-medium">{name} </span>}
+              이해도 <span className="font-semibold">{record.rating}</span> · {RATING_LABEL[record.rating]}
+            </span>
+          </p>
+        ) : null,
+      )}
+    </div>
+  )
+}
+
+/** 지금 한국 시간 'HH:MM' */
+function nowTimeKST() {
+  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false }).format(
+    new Date(),
   )
 }
 

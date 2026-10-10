@@ -16,6 +16,7 @@ import { AcademyRegisterPage } from '@/pages/academies/AcademyRegisterPage'
 import { StudentsPage } from '@/pages/academies/StudentsPage'
 import { AttendanceCheckPage } from '@/pages/classes/AttendanceCheckPage'
 import { ClassDetailPage } from '@/pages/classes/ClassDetailPage'
+import { LessonFeedbackPage } from '@/pages/classes/LessonFeedbackPage'
 import { ClassFormPage } from '@/pages/classes/ClassFormPage'
 import { AdminAcademiesPage } from '@/pages/admin/AdminAcademiesPage'
 import { AnnouncementDetailPage } from '@/pages/announcements/AnnouncementDetailPage'
@@ -167,6 +168,10 @@ function MainApp() {
           <Route
             path="classes/:id/attendance"
             element={user ? <AttendanceCheckPage /> : <LockedTab label="출석 체크" onLogin={goLogin} />}
+          />
+          <Route
+            path="classes/:id/feedback"
+            element={user ? <LessonFeedbackPage /> : <LockedTab label="수업 이해도" onLogin={goLogin} />}
           />
           <Route
             path="classes/:id"

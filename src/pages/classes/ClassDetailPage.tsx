@@ -2,6 +2,7 @@ import { Archive, ClipboardCheck, Clock, DoorOpen, Pencil, Plus, UserRound, X } 
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 
+import { ClassFeedbackSection } from '@/components/feedback/ClassFeedbackSection'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -142,6 +143,8 @@ export function ClassDetailPage({ userId }: { userId: string }) {
           )}
         </CardContent>
       </Card>
+
+      {students.data && <ClassFeedbackSection cls={cls} students={students.data} isStaff={isStaff} />}
 
       {isStaff && (
         <Card className="gap-0 py-0">
