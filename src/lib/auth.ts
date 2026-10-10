@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { stopVerifyMode, verifyRuntime } from '@/verify/mode'
 
 export type SocialProvider = 'naver' | 'kakao'
 
@@ -83,6 +84,11 @@ export function completeNaverSignIn() {
 }
 
 export async function signOut() {
+  // 검증 모드에서는 실제 로그아웃 대신 검증 모드를 끝낸다 (운영자 계정으로 돌아감)
+  if (verifyRuntime().active) {
+    stopVerifyMode()
+    return
+  }
   await supabase?.auth.signOut()
 }
 

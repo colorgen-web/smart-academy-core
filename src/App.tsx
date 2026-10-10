@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactElement } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router'
 
 import { AppShell } from '@/components/layout/AppShell'
+import { VerifyBanner } from '@/components/verify/VerifyBanner'
 import { UnreadProvider } from '@/contexts/UnreadProvider'
 import { Button } from '@/components/ui/button'
 import { TABS } from '@/components/layout/tabs'
@@ -19,6 +20,7 @@ import { ClassDetailPage } from '@/pages/classes/ClassDetailPage'
 import { LessonFeedbackPage } from '@/pages/classes/LessonFeedbackPage'
 import { ClassFormPage } from '@/pages/classes/ClassFormPage'
 import { AdminAcademiesPage } from '@/pages/admin/AdminAcademiesPage'
+import { VerifyModePage } from '@/pages/admin/VerifyModePage'
 import { AnnouncementDetailPage } from '@/pages/announcements/AnnouncementDetailPage'
 import { AnnouncementsPage } from '@/pages/announcements/AnnouncementsPage'
 import { AnnouncementWritePage } from '@/pages/announcements/AnnouncementWritePage'
@@ -34,6 +36,7 @@ import { ClassesTab } from '@/pages/tabs/ClassesTab'
 import { NotificationsTab } from '@/pages/tabs/NotificationsTab'
 import { LockedTab } from '@/pages/tabs/PlaceholderTabs'
 import { SettingsTab } from '@/pages/tabs/SettingsTab'
+import { personaOf, personaUser, setVerifyRuntime, useVerifySetting } from '@/verify/mode'
 
 function isNaverCallback() {
   return window.location.pathname === NAVER_CALLBACK_PATH
@@ -57,7 +60,14 @@ function MainApp() {
   const [naverPending, setNaverPending] = useState(isNaverCallback)
   const [authError, setAuthError] = useState<string | null>(null)
   const [loginNotice, setLoginNotice] = useState<string | null>(null)
-  const user = session?.user ?? null
+  const realUser = session?.user ?? null
+  // 검증 모드: 실제 운영자로 로그인해 있을 때만. 고른 역할로 로그인한 것처럼 보이고, 데이터는 브라우저 안 검증 DB 를 쓴다.
+  const verifySetting = useVerifySetting()
+  const verifyOn = verifySetting.on && checkAdmin(realUser)
+  // 이번 렌더의 데이터 요청부터 바로 적용되도록 렌더 중에 알려 준다 (같은 값이면 아무 일도 없음)
+  setVerifyRuntime(verifyOn, verifySetting.persona)
+  const user = verifyOn ? personaUser(personaOf(verifySetting.persona)) : realUser
+  const banner = verifyOn ? <VerifyBanner persona={verifySetting.persona} /> : null
   const { profile, error: profileError, setProfile, reload: reloadProfile } = useProfile(user?.id)
 
   useEffect(() => {
@@ -76,24 +86,37 @@ function MainApp() {
 
   if (user && profileError) {
     return (
-      <main className="flex min-h-svh flex-col items-center justify-center gap-3 px-4 text-center">
-        <p className="font-semibold">회원 정보를 불러오지 못했어요.</p>
-        <Button onClick={reloadProfile}>다시 시도</Button>
-      </main>
+      <>
+        {banner}
+        <main className="flex min-h-svh flex-col items-center justify-center gap-3 px-4 text-center">
+          <p className="font-semibold">
+            {verifyOn ? '검증 데이터를 불러오지 못했어요.' : '회원 정보를 불러오지 못했어요.'}
+          </p>
+          <Button onClick={reloadProfile}>다시 시도</Button>
+        </main>
+      </>
     )
   }
 
   if (loading || naverPending || (user && profile === undefined)) {
     return (
-      <main className="flex min-h-svh items-center justify-center text-sm text-muted-foreground">
-        로그인 확인 중…
-      </main>
+      <>
+        {banner}
+        <main className="flex min-h-svh items-center justify-center text-sm text-muted-foreground">
+          {verifyOn ? '검증 데이터 준비 중… (처음에는 30초쯤 걸려요)' : '로그인 확인 중…'}
+        </main>
+      </>
     )
   }
 
   // 로그인은 했지만 회원 정보가 없으면 회원가입부터
   if (user && profile === null) {
-    return <SignupPage user={user} onComplete={setProfile} />
+    return (
+      <>
+        {banner}
+        <SignupPage key={user.id} user={user} onComplete={setProfile} />
+      </>
+    )
   }
 
   const isGuest = !user
@@ -109,7 +132,9 @@ function MainApp() {
   }
 
   return (
-    <UnreadProvider enabled={!!user}>
+    // 역할을 바꾸면 화면 전체를 새로 그려 이전 역할의 데이터가 남지 않게 한다
+    <UnreadProvider key={user?.id ?? 'guest'} enabled={!!user}>
+      {banner}
       <AppShell isGuest={isGuest}>
         <Routes>
           <Route index element={<HomeTab profile={profile ?? null} onLogin={goLogin} />} />
@@ -178,6 +203,7 @@ function MainApp() {
             element={user ? <ClassDetailPage userId={user.id} /> : <LockedTab label="반" onLogin={goLogin} />}
           />
           <Route path="admin/academies" element={isAdmin ? <AdminAcademiesPage /> : <Navigate to="/" replace />} />
+          <Route path="admin/verify" element={checkAdmin(realUser) ? <VerifyModePage /> : <Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AppShell>

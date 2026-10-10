@@ -1,6 +1,7 @@
 import type { User } from '@supabase/supabase-js'
 import {
   ChevronRight,
+  FlaskConical,
   LogIn,
   LogOut,
   Monitor,
@@ -125,6 +126,11 @@ export function SettingsTab({ user, profile, isAdmin, onLogin }: SettingsTabProp
             >
               <School className="size-4 text-primary" />
               <span className="flex-1">학원 승인 관리</span>
+              <ChevronRight className="size-4 text-muted-foreground" />
+            </Link>
+            <Link to="/admin/verify" className="-mx-2 flex items-center gap-2 rounded-lg px-2 py-2 text-sm hover:bg-muted">
+              <FlaskConical className="size-4 text-primary" />
+              <span className="flex-1">검증 모드</span>
               <ChevronRight className="size-4 text-muted-foreground" />
             </Link>
           </CardContent>
