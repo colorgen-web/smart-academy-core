@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
@@ -15,5 +16,10 @@ export default defineConfig({
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
     },
+  },
+  test: {
+    environment: 'node',
+    // DB 테스트는 마이그레이션 적용 + 샘플 데이터 생성에 몇 초 걸린다
+    hookTimeout: 60_000,
   },
 })
