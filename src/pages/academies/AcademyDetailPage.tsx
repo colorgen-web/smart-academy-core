@@ -1,6 +1,6 @@
-import { BookOpen, Check, ChevronRight, Copy, MapPin, NotebookPen, Phone, RefreshCw, Send, UsersRound, X } from 'lucide-react'
-import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { BookOpen, Check, ChevronRight, Copy, MapPin, NotebookPen, Phone, RefreshCw, Send, Trash2, UsersRound, X } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
 
 import { StatusBadge } from '@/components/academies/StatusBadge'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAsync } from '@/hooks/useAsync'
 import {
   decideAcademyMember,
+  deleteAcademy,
   errorMessage,
   fetchAcademy,
   fetchAcademyMembers,
@@ -22,6 +23,7 @@ import {
   type AcademyRole,
 } from '@/lib/academies'
 import { formatPhone } from '@/lib/profile'
+import { inputClass } from '@/lib/styles'
 
 export function AcademyDetailPage({ userId }: { userId: string }) {
   const id = Number(useParams().id)
@@ -152,6 +154,8 @@ export function AcademyDetailPage({ userId }: { userId: string }) {
         )}
 
       {isDirector && <DirectorPanel academy={academy} />}
+
+      {academy.owner_id === userId && <DeleteAcademyCard academy={academy} />}
     </div>
   )
 }
@@ -311,5 +315,93 @@ function DirectorPanel({ academy }: { academy: Academy }) {
         </Card>
       )}
     </>
+  )
+}
+
+/** 등록한 원장: 학원 삭제(폐원). 학원 이름을 그대로 입력해야 지워진다 */
+function DeleteAcademyCard({ academy }: { academy: Academy }) {
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const matches = name.trim() === academy.name
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!matches) return
+    setBusy(true)
+    setError(null)
+    try {
+      await deleteAcademy(academy.id, name.trim())
+      navigate('/', { replace: true })
+    } catch (err) {
+      setError(errorMessage(err, '삭제하지 못했어요. 잠시 후 다시 시도해 주세요.'))
+      setBusy(false)
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex w-fit items-center gap-1 self-center py-2 text-sm text-muted-foreground hover:text-destructive"
+      >
+        <Trash2 className="size-4" />
+        학원 삭제
+      </button>
+    )
+  }
+
+  return (
+    <Card className="ring-destructive/40">
+      <CardHeader>
+        <CardTitle className="text-destructive">학원 삭제</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <p className="text-sm">
+            반·시간표·학생 명단·출석·수업 이해도·공지와 게시판이 <b>모두 지워지고 되돌릴 수 없어요.</b> 소속 회원에게는 삭제
+            알림이 가요.
+          </p>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm text-muted-foreground">
+              삭제하려면 <b className="text-foreground">{academy.name}</b>을(를) 그대로 입력해 주세요
+            </span>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={inputClass}
+              autoComplete="off"
+              aria-label="학원 이름 확인"
+              autoFocus
+            />
+          </label>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                setOpen(false)
+                setName('')
+                setError(null)
+              }}
+            >
+              취소
+            </Button>
+            <Button type="submit" variant="destructive" className="flex-1" disabled={!matches || busy}>
+              {busy ? '삭제 중…' : '학원 삭제'}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   )
 }

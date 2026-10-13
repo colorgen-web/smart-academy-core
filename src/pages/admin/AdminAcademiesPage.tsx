@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAsync } from '@/hooks/useAsync'
 import {
+  deleteAcademy,
   errorMessage,
   fetchAcademiesForReview,
   formatAcademyPhone,
@@ -41,6 +43,26 @@ export function AdminAcademiesPage() {
       reload()
     } catch (err) {
       window.alert(errorMessage(err, '처리하지 못했어요.'))
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const remove = async (academy: AcademyForReview) => {
+    const input = window.prompt(
+      `${academy.name}을(를) 삭제할까요?\n반·학생 명단·출석·게시판이 모두 지워지고 되돌릴 수 없어요.\n삭제하려면 학원 이름을 그대로 입력해 주세요.`,
+    )
+    if (input === null) return
+    if (input.trim() !== academy.name) {
+      window.alert('학원 이름이 맞지 않아 삭제하지 않았어요.')
+      return
+    }
+    setBusyId(academy.id)
+    try {
+      await deleteAcademy(academy.id, input.trim())
+      reload()
+    } catch (err) {
+      window.alert(errorMessage(err, '삭제하지 못했어요.'))
     } finally {
       setBusyId(null)
     }
@@ -103,6 +125,17 @@ export function AdminAcademiesPage() {
                       </>
                     )}
                   </dl>
+                  {status !== 'pending' && (
+                    <button
+                      type="button"
+                      onClick={() => remove(academy)}
+                      disabled={busyId === academy.id}
+                      className="flex w-fit items-center gap-1 pt-1 text-xs text-destructive hover:underline disabled:opacity-50"
+                    >
+                      <Trash2 className="size-3" />
+                      학원 삭제
+                    </button>
+                  )}
                   {status === 'pending' && (
                     <div className="flex gap-2 pt-1">
                       <Button

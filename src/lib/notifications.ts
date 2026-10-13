@@ -11,6 +11,7 @@ export type NotificationType =
   | 'lesson_feedback'
   | 'academy_post'
   | 'post_comment'
+  | 'academy_closed'
 
 export type AppNotification = {
   id: number
