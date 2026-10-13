@@ -173,3 +173,9 @@ export function formatAcademyPhone(digits: string | null) {
   }
   return `${digits.slice(0, 3)}-${digits.slice(3, digits.length - 4)}-${digits.slice(-4)}`
 }
+
+/** 학원 삭제(폐원): 등록한 원장 또는 운영자. confirmName 은 학원 이름과 같아야 한다 (DB 함수가 확인) */
+export async function deleteAcademy(academyId: number, confirmName: string) {
+  const { error } = await db().rpc('delete_academy', { p_academy_id: academyId, p_confirm_name: confirmName })
+  if (error) throw error
+}
