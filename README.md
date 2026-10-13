@@ -11,7 +11,17 @@ npm install
 npm run dev      # 개발 서버
 npm run build    # 프로덕션 빌드
 npm run lint     # 린트
+npm test         # 자동 테스트 (Vitest)
 ```
+
+## 자동 테스트
+
+`npm test` 로 실행하고, GitHub 에 push 하거나 PR 을 올리면 GitHub Actions(`.github/workflows/ci.yml`)가 린트 → 테스트 → 빌드를 자동으로 돌린다.
+
+- **함수 테스트** (`src/lib/*.test.ts`): 날짜·전화번호 형식, 시간표 묶기, 수업 이해도 날짜·요약 같은 계산 함수
+- **DB 테스트** (`src/test/permissions.test.ts`): 검증 모드와 같은 방식으로 메모리 PGlite 에 `supabase/migrations` 를 그대로 적용하고 샘플 데이터(`src/verify/seed.ts`) 위에서 역할별 권한(RLS·DB 함수)과 알림 트리거를 확인한다. 실제 Supabase 는 건드리지 않는다
+- 새 마이그레이션이 생기면 DB 테스트가 자동으로 함께 적용하므로, 마이그레이션 SQL 오류도 여기서 걸린다
+- 새 기능을 넣을 때는 권한(누가 보고 누가 못 쓰는지)을 `src/test/` 에 테스트로 남긴다. `createTestDb()` 의 `as('parent', sql)` 처럼 역할을 골라 SQL 을 실행할 수 있다
 
 ## 로그인 (Supabase)
 

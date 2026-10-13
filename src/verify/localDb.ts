@@ -11,7 +11,7 @@ import type { Persona } from '@/verify/mode'
 const DB_NAME = 'smart-academy-verify'
 
 // Supabase 가 기본으로 갖고 있는 것 중 마이그레이션이 쓰는 부분 (역할, auth 스키마)
-const BOOTSTRAP = `
+export const BOOTSTRAP = `
   create role anon nologin;
   create role authenticated nologin;
   create schema auth;
@@ -59,6 +59,18 @@ async function open() {
   const fresh = !rows[0].ready
   if (fresh) await db.exec(BOOTSTRAP)
 
+  await applyMigrations(db)
+
+  if (fresh) {
+    const { seedVerifyData } = await import('@/verify/seed')
+    await seedVerifyData(db)
+    await db.query(`insert into verify_meta.info values ('seeded_at', now()::text)`)
+  }
+  return db
+}
+
+/** 아직 적용하지 않은 supabase/migrations 를 이름 순으로 적용한다 (BOOTSTRAP 이 먼저 실행돼 있어야 함) */
+export async function applyMigrations(db: PGlite) {
   const applied = new Set(
     (await db.query<{ name: string }>('select name from verify_meta.applied')).rows.map((r) => r.name),
   )
@@ -71,13 +83,6 @@ async function open() {
       await tx.query('insert into verify_meta.applied (name) values ($1)', [name])
     })
   }
-
-  if (fresh) {
-    const { seedVerifyData } = await import('@/verify/seed')
-    await seedVerifyData(db)
-    await db.query(`insert into verify_meta.info values ('seeded_at', now()::text)`)
-  }
-  return db
 }
 
 /** 검증 데이터를 지운다 (다음에 열면 샘플 데이터로 새로 시작) */
