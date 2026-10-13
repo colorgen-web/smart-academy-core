@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 
 import { MyAcademies } from '@/components/academies/MyAcademies'
 import { LatestAnnouncements } from '@/components/announcements/LatestAnnouncements'
+import { LatestAcademyNotices } from '@/components/board/LatestAcademyNotices'
 import { Button } from '@/components/ui/button'
 import { HomeSummary } from '@/components/HomeSummary'
 import { Card, CardContent } from '@/components/ui/card'
@@ -68,6 +69,8 @@ export function HomeTab({ profile, onLogin }: HomeTabProps) {
       <HomeSummary userId={profile?.id} />
 
       {profile && <MyAcademies profile={profile} />}
+
+      {profile && <LatestAcademyNotices userId={profile.id} />}
 
       <LatestAnnouncements />
     </div>

@@ -10,9 +10,12 @@ import { useAuth } from '@/hooks/useAuth'
 import { useProfile } from '@/hooks/useProfile'
 import '@/hooks/useTheme' // 테마 적용 + OS 다크모드 변경 구독 (모듈 로드 시 1회)
 import { completeNaverSignIn, isAdmin as checkAdmin, NAVER_CALLBACK_PATH } from '@/lib/auth'
+import { AcademyBoardPage } from '@/pages/academies/AcademyBoardPage'
 import { AcademyDetailPage } from '@/pages/academies/AcademyDetailPage'
 import { AcademyJoinPage } from '@/pages/academies/AcademyJoinPage'
 import { AcademyMessagePage } from '@/pages/academies/AcademyMessagePage'
+import { AcademyPostFormPage } from '@/pages/academies/AcademyPostFormPage'
+import { AcademyPostPage } from '@/pages/academies/AcademyPostPage'
 import { AcademyRegisterPage } from '@/pages/academies/AcademyRegisterPage'
 import { StudentsPage } from '@/pages/academies/StudentsPage'
 import { AttendanceCheckPage } from '@/pages/classes/AttendanceCheckPage'
@@ -187,6 +190,17 @@ function MainApp() {
             path="academies/:id/students"
             element={user ? <StudentsPage userId={user.id} /> : <LockedTab label="학생 명단" onLogin={goLogin} />}
           />
+          {/* 학원 공지·게시판: 볼 수 있는 글은 RLS 가 거르고, 쓰기 권한은 DB 함수가 확인한다 */}
+          <Route
+            path="academies/:id/board"
+            element={user ? <AcademyBoardPage userId={user.id} /> : <LockedTab label="공지·게시판" onLogin={goLogin} />}
+          />
+          <Route path="academies/:id/board/new" element={user ? <AcademyPostFormPage userId={user.id} /> : <Navigate to="/" replace />} />
+          <Route
+            path="academy-posts/:id"
+            element={user ? <AcademyPostPage userId={user.id} /> : <LockedTab label="공지·게시판" onLogin={goLogin} />}
+          />
+          <Route path="academy-posts/:postId/edit" element={user ? <AcademyPostFormPage userId={user.id} /> : <Navigate to="/" replace />} />
           {/* 반·출석: 권한은 DB 가 확인하고, 화면은 역할에 맞게 버튼을 숨긴다 */}
           <Route path="academies/:academyId/classes/new" element={user ? <ClassFormPage /> : <Navigate to="/" replace />} />
           <Route path="classes/:id/edit" element={user ? <ClassFormPage /> : <Navigate to="/" replace />} />

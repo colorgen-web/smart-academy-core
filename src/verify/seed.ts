@@ -9,6 +9,7 @@ import { personaOf, type PersonaKey } from '@/verify/mode'
  * - 스마트수학학원(승인됨): 원장 김원장, 강사 박선생, 학부모 이엄마, 학생 이민준 / 최아빠는 가입 대기
  * - 튼튼영어학원: 운영자 승인 대기
  * - 반 2개, 학생 4명, 지난 3주 출석, 이민준의 수업 이해도 기록
+ * - 학원 공지 2개(고정 공지, 학부모 대상), 학부모 게시글과 원장 댓글
  * - 신규 회원 정정신규는 회원가입 전
  */
 export async function seedVerifyData(db: PGlite) {
@@ -155,6 +156,14 @@ export async function seedVerifyData(db: PGlite) {
     })
     r++
   }
+
+  // 학원 공지·게시판: 고정 공지, 학부모 대상 공지, 학부모 게시글 + 댓글
+  const post = (who: PersonaKey, category: string, title: string, content: string, pinned = false, audience = '{teacher,parent,student}') =>
+    one(who, `select public.save_academy_post(null, $1, $2, $3, $4, $5, $6::text[])`, [academyId, category, title, content, pinned, audience])
+  await post('director', 'notice', '10월 학원 운영 안내', '10월 9일(한글날)은 휴원합니다.\n보강 일정은 반별로 따로 알려 드릴게요.', true)
+  await post('teacher', 'notice', '학부모 상담 주간 안내', '다음 주 화·목 오후에 상담을 진행해요. 원하시는 시간을 댓글로 남겨 주세요.', false, '{parent}')
+  const question = Number(await post('parent', 'general', '교재 구입 문의', '초4 사고력 교재는 학원에서 구입하나요?'))
+  await run('director', `insert into public.academy_post_comments (post_id, content) values ($1, '네, 첫 수업 때 나눠 드려요.')`, [question])
 
   // 원장이 보낸 학원 알림
   await run('director', `select public.send_academy_message($1, '이번 주 보강 안내', '금요일 수업은 30분 일찍 시작해요.', '{teacher,parent,student}'::text[])`, [

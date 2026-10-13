@@ -130,6 +130,7 @@ const RELATIONS: Record<string, Record<string, { kind: 'one' | 'many'; fk: strin
   class_students: { students: { kind: 'one', fk: 'student_id' }, classes: { kind: 'one', fk: 'class_id' } },
   attendance: { students: { kind: 'one', fk: 'student_id' }, classes: { kind: 'one', fk: 'class_id' } },
   lesson_feedback: { students: { kind: 'one', fk: 'student_id' }, classes: { kind: 'one', fk: 'class_id' } },
+  academy_posts: { academies: { kind: 'one', fk: 'academy_id' }, academy_post_comments: { kind: 'many', fk: 'post_id' } },
 }
 
 let aliasSeq = 0
@@ -142,6 +143,10 @@ function selectList(tableName: string, nodes: SelectNode[], alias: string): stri
       const rel = RELATIONS[tableName]?.[n.table]
       if (!rel) throw new ApiError(400, 'PGRST200', `관계를 찾을 수 없음: ${tableName} → ${n.table}`)
       const a = `e${++aliasSeq}`
+      // comments:academy_post_comments(count) → [{ count: n }]
+      if (rel.kind === 'many' && n.children.length === 1 && n.children[0].kind === 'col' && n.children[0].name === 'count') {
+        return `jsonb_build_array(jsonb_build_object('count', (select count(*) from public.${q(n.table)} ${a} where ${a}.${q(rel.fk)} = ${alias}.id))) as ${q(n.alias)}`
+      }
       const inner = `select ${selectList(n.table, n.children, a)} from public.${q(n.table)} ${a}`
       return rel.kind === 'one'
         ? `(select to_jsonb(_e) from (${inner} where ${a}.id = ${alias}.${q(rel.fk)}) _e) as ${q(n.alias)}`
