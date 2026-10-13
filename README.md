@@ -135,8 +135,49 @@ where email = '관리자@이메일.com';
 | 학원 알림 | 원장이 고른 역할의 소속 회원 | 원장이 직접 보냄 (학원당 하루 20번) |
 
 - 알림 탭: 최신순 20개씩, 누르면 읽음 처리 후 관련 화면으로 이동, 모두 읽음, 삭제
-- 하단 알림 탭 배지와 홈 "새 알림"은 화면 이동·앱 복귀·1분마다 갱신 (실시간 푸시는 아직 없음)
+- 하단 알림 탭 배지와 홈 "새 알림"은 화면 이동·앱 복귀·1분마다 갱신
+- 푸시를 켠 기기에는 알림이 생기는 즉시 같은 내용이 푸시로도 간다 (아래 "웹 푸시")
 - 마이그레이션: `supabase/migrations/20261009000000_notifications.sql` (classes_attendance 다음에 실행)
+
+## 웹 푸시
+
+설정 > **푸시 알림** > "이 기기에서 푸시 받기". 알림 탭에 들어가는 모든 알림이 켠 기기로 바로 푸시된다. 누르면 관련 화면이 열린다.
+추가 비용 없음 (브라우저 표준 웹 푸시, 별도 푸시 서비스 가입 불필요).
+
+```
+알림 insert (DB 트리거)
+  → Database Webhook (notifications INSERT)
+  → Edge Function send-push: 받는 사람의 기기 구독(push_subscriptions)으로 발송
+  → 기기의 서비스 워커(public/sw.js)가 알림 표시
+```
+
+- 기기(브라우저)마다 따로 켠다. 로그아웃하면 그 기기 구독을 지운다. 끊긴 구독(404·410)은 발송할 때 지운다
+- 안드로이드·PC: 크롬·엣지·삼성 인터넷·파이어폭스·사파리에서 바로 켤 수 있다
+- 아이폰·아이패드: iOS 16.4 이상, 사파리 **공유 → 홈 화면에 추가**로 설치한 앱에서만 켤 수 있다 (화면에 안내가 나온다)
+- 앱 설치용 정보: `public/manifest.webmanifest`, 아이콘 `public/app-icon-192.png`·`app-icon-512.png`
+
+### 설정 순서
+
+1. VAPID 키 만들기 (한 번만, 개인키는 공개하지 말 것)
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+2. SQL Editor 에서 `supabase/migrations/20261015000000_web_push.sql` 실행 (academy_deletion 다음)
+3. Edge Functions → Secrets
+   - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`: 1번 키
+   - `VAPID_SUBJECT`: `mailto:운영자메일` (푸시 서비스가 문제 시 연락할 주소)
+   - `PUSH_WEBHOOK_SECRET`: 아무 긴 임의 문자열 (예: `openssl rand -hex 32`)
+4. Edge Function `send-push` 배포, **Verify JWT 끔** (함수가 `x-push-secret` 헤더로 직접 확인한다)
+   ```bash
+   supabase functions deploy send-push --no-verify-jwt
+   ```
+5. Database → Webhooks → Create a new hook
+   - Table `notifications`, Events **Insert**
+   - Type **Supabase Edge Functions**, 함수 `send-push`, Method POST
+   - HTTP Headers 에 `x-push-secret`: 3번의 `PUSH_WEBHOOK_SECRET`
+6. Vercel 환경 변수 `VITE_VAPID_PUBLIC_KEY` 에 1번 공개키를 넣고 다시 배포 (비어 있으면 설정에 "준비 중"으로 나온다)
+
+확인: 설정에서 푸시를 켠 계정으로 알림이 생기게 해 본다 (예: 다른 계정으로 학원 공지 올리기). 안 오면 Edge Functions → send-push → Logs 를 본다.
 
 ## 학원 공지 · 게시판
 
