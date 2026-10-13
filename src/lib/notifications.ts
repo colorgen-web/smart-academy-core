@@ -9,6 +9,8 @@ export type NotificationType =
   | 'academy_message'
   | 'member_left'
   | 'lesson_feedback'
+  | 'academy_post'
+  | 'post_comment'
 
 export type AppNotification = {
   id: number

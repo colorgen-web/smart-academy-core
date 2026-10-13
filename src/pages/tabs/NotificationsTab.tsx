@@ -5,6 +5,8 @@ import {
   ClipboardCheck,
   Gauge,
   Megaphone,
+  MessageSquare,
+  NotebookPen,
   School,
   Send,
   Trash2,
@@ -42,6 +44,8 @@ const ICON: Record<NotificationType, { icon: LucideIcon; tone: string }> = {
   academy_message: { icon: Megaphone, tone: 'bg-warning/25 text-warning-foreground dark:text-warning' },
   member_left: { icon: UserMinus, tone: 'bg-muted text-muted-foreground' },
   lesson_feedback: { icon: Gauge, tone: 'bg-accent text-accent-foreground' },
+  academy_post: { icon: NotebookPen, tone: 'bg-accent text-accent-foreground' },
+  post_comment: { icon: MessageSquare, tone: 'bg-muted text-muted-foreground' },
 }
 
 /** 알림 탭: 최신순 목록, 누르면 읽음 처리 후 관련 화면으로 */

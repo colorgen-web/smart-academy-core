@@ -1,3 +1,7 @@
+/// <reference types="node" />
+import { readdir, readFile } from 'node:fs/promises'
+import path from 'node:path'
+
 import { PGlite } from '@electric-sql/pglite'
 
 import { applyMigrations, asPersona, BOOTSTRAP } from '@/verify/localDb'
@@ -11,7 +15,7 @@ import { seedVerifyData } from '@/verify/seed'
 export async function createTestDb() {
   const db = await PGlite.create()
   await db.exec(BOOTSTRAP)
-  await applyMigrations(db)
+  await applyMigrations(db, await migrationFiles())
   await seedVerifyData(db)
 
   /** 그 역할로 로그인한 것처럼 SQL 실행 */
@@ -27,6 +31,13 @@ export async function createTestDb() {
     })
 
   return { db, as, asAnon }
+}
+
+const MIGRATIONS_DIR = path.resolve(import.meta.dirname, '../../supabase/migrations')
+
+async function migrationFiles() {
+  const names = (await readdir(MIGRATIONS_DIR)).filter((n) => n.endsWith('.sql'))
+  return Object.fromEntries(names.map((n) => [n, () => readFile(path.join(MIGRATIONS_DIR, n), 'utf8')]))
 }
 
 export type TestDb = Awaited<ReturnType<typeof createTestDb>>

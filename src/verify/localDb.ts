@@ -69,15 +69,18 @@ async function open() {
   return db
 }
 
-/** 아직 적용하지 않은 supabase/migrations 를 이름 순으로 적용한다 (BOOTSTRAP 이 먼저 실행돼 있어야 함) */
-export async function applyMigrations(db: PGlite) {
+/**
+ * 아직 적용하지 않은 supabase/migrations 를 이름 순으로 적용한다 (BOOTSTRAP 이 먼저 실행돼 있어야 함).
+ * files: 경로 → SQL. 테스트는 디스크에서 바로 읽은 목록을 넘긴다 (테스트 도구의 변환 캐시에 새 마이그레이션이 빠지지 않게).
+ */
+export async function applyMigrations(db: PGlite, files: Record<string, () => Promise<string>> = migrations) {
   const applied = new Set(
     (await db.query<{ name: string }>('select name from verify_meta.applied')).rows.map((r) => r.name),
   )
-  for (const path of Object.keys(migrations).sort()) {
+  for (const path of Object.keys(files).sort()) {
     const name = path.split('/').pop()!
     if (applied.has(name)) continue
-    const sql = await migrations[path]()
+    const sql = await files[path]()
     await db.transaction(async (tx) => {
       await tx.exec(sql)
       await tx.query('insert into verify_meta.applied (name) values ($1)', [name])
