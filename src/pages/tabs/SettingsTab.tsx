@@ -15,6 +15,7 @@ import {
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 
+import { PushSettingsCard } from '@/components/PushSettingsCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -113,6 +114,8 @@ export function SettingsTab({ user, profile, isAdmin, onLogin }: SettingsTabProp
           </CardContent>
         </Card>
       )}
+
+      {user && <PushSettingsCard />}
 
       {isAdmin && (
         <Card size="sm">

@@ -1,3 +1,4 @@
+import { disablePush } from '@/lib/push'
 import { supabase } from '@/lib/supabase'
 import { stopVerifyMode, verifyRuntime } from '@/verify/mode'
 
@@ -89,6 +90,8 @@ export async function signOut() {
     stopVerifyMode()
     return
   }
+  // 이 기기의 푸시 구독을 먼저 지운다 (세션이 있어야 DB 에서 지울 수 있다). 실패해도 로그아웃은 한다
+  await disablePush().catch(() => {})
   await supabase?.auth.signOut()
 }
 
