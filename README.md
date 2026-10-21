@@ -171,13 +171,21 @@ where email = '관리자@이메일.com';
    ```bash
    supabase functions deploy send-push --no-verify-jwt
    ```
-5. Database → Webhooks → Create a new hook
+5. Integrations → **Database Webhooks** (처음이면 Overview 탭에서 **Enable webhooks**) → Webhooks 탭 → Create a new hook
    - Table `notifications`, Events **Insert**
    - Type **Supabase Edge Functions**, 함수 `send-push`, Method POST
-   - HTTP Headers 에 `x-push-secret`: 3번의 `PUSH_WEBHOOK_SECRET`
+   - HTTP Headers
+     - `x-push-secret`: 3번의 `PUSH_WEBHOOK_SECRET`
+     - `apikey`: Project Settings → API Keys 의 **Publishable key** (없으면 Supabase 가 함수 앞에서 `MISSING_CREDENTIALS` 로 막는다)
 6. Vercel 환경 변수 `VITE_VAPID_PUBLIC_KEY` 에 1번 공개키를 넣고 다시 배포 (비어 있으면 설정에 "준비 중"으로 나온다)
 
-확인: 설정에서 푸시를 켠 계정으로 알림이 생기게 해 본다 (예: 다른 계정으로 학원 공지 올리기). 안 오면 Edge Functions → send-push → Logs 를 본다.
+확인: 설정에서 푸시를 켠 계정으로 알림이 생기게 해 본다 (예: 다른 계정으로 학원 공지 올리기). 안 오면 SQL Editor 에서 웹훅 응답을 본다.
+
+```sql
+select created, status_code, left(content::text, 300) from net._http_response order by created desc limit 5;
+```
+
+`"sent":1` 이면 발송 성공(기기 알림 설정 확인), `401 unauthorized` 는 비밀값 불일치, `MISSING_CREDENTIALS` 는 `apikey` 헤더 누락, `"sent":0` 은 그 계정의 구독 없음.
 
 ## 학원 공지 · 게시판
 
