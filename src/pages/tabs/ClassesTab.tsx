@@ -70,22 +70,37 @@ export function ClassesTab({ userId }: { userId: string }) {
   return (
     <div className="flex flex-col gap-5">
       <div role="tablist" aria-label="요일" className="grid grid-cols-7 gap-1">
-        {WEEKDAY_ORDER.map((d) => (
-          <button
-            key={d}
-            type="button"
-            role="tab"
-            aria-selected={d === day}
-            onClick={() => setDay(d)}
-            className={cn(
-              'flex h-12 flex-col items-center justify-center rounded-xl text-sm font-medium transition-colors',
-              d === day ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground ring-1 ring-foreground/10',
-            )}
-          >
-            {WEEKDAY_LABEL[d]}
-            {d === today && <span className="text-[10px] leading-none opacity-80">오늘</span>}
-          </button>
-        ))}
+        {WEEKDAY_ORDER.map((d) => {
+          const count = countClassesOn(data, d)
+          return (
+            <button
+              key={d}
+              type="button"
+              role="tab"
+              aria-selected={d === day}
+              aria-label={`${WEEKDAY_LABEL[d]}요일${d === today ? ' (오늘)' : ''} 수업 ${count}개`}
+              onClick={() => setDay(d)}
+              className={cn(
+                'relative flex h-12 flex-col items-center justify-center rounded-xl text-sm font-medium transition-colors',
+                d === day ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground ring-1 ring-foreground/10',
+              )}
+            >
+              {WEEKDAY_LABEL[d]}
+              {d === today && <span className="text-[10px] leading-none opacity-80">오늘</span>}
+              {count > 0 && (
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'absolute -top-1.5 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold tabular-nums',
+                    'bg-primary text-primary-foreground ring-2 ring-background',
+                  )}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       <DayList data={data} day={day} feedback={feedback.data} />
