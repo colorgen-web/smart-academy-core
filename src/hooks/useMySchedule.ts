@@ -1,6 +1,9 @@
+import type { DependencyList } from 'react'
+
 import { useAsync } from '@/hooks/useAsync'
 import { fetchMyAcademies, type AcademyRole } from '@/lib/academies'
 import {
+  classesOnWeekday,
   fetchClasses,
   fetchClassesByIds,
   fetchEnrollments,
@@ -52,12 +55,18 @@ async function loadMySchedule(userId: string): Promise<MySchedule> {
 }
 
 /** 로그인한 사람의 학원 역할·반·자녀를 한 번에 불러온다 (수업·출석 탭, 홈 요약) */
-export function useMySchedule(userId: string | undefined) {
+export function useMySchedule(userId: string | undefined, refreshDeps: DependencyList = []) {
   return useAsync(
     () =>
       userId
         ? loadMySchedule(userId)
         : Promise.resolve<MySchedule>({ staffAcademies: [], staffClasses: [], children: [], childClasses: [] }),
-    [userId],
+    [userId, ...refreshDeps],
   )
+}
+
+/** 그 요일 수업 수. 강사이면서 학부모라 같은 수업이 두 번 잡혀도 한 번만 센다 */
+export function countClassesOn(schedule: MySchedule, weekday: number) {
+  const all = [...schedule.staffClasses, ...schedule.childClasses.map((c) => c.cls)]
+  return new Set(classesOnWeekday(all, weekday).map((i) => `${i.cls.id}-${i.schedule.start_time}`)).size
 }

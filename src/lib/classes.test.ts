@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { classesOnWeekday, formatSchedules, type ClassInfo } from '@/lib/classes'
+import { countClassesOn } from '@/hooks/useMySchedule'
 import { canRateDate, feedbackSummary, latestDateOfWeekday, latestRatableDate, type Rating } from '@/lib/feedback'
 
 const cls = (id: number, schedules: ClassInfo['schedules'], active = true) =>
@@ -24,6 +25,23 @@ describe('시간표', () => {
     const closed = cls(3, [{ weekday: 2, start_time: '14:00:00', end_time: '15:00:00' }], false)
     const other = cls(4, [{ weekday: 3, start_time: '14:00:00', end_time: '15:00:00' }])
     expect(classesOnWeekday([a, b, closed, other], 2).map((x) => x.cls.id)).toEqual([2, 1])
+  })
+
+  it('countClassesOn 은 그 요일 수업 수를 세고, 강사·학부모로 겹친 수업은 한 번만 센다', () => {
+    const a = cls(1, [
+      { weekday: 3, start_time: '15:00:00', end_time: '16:00:00' },
+      { weekday: 3, start_time: '18:00:00', end_time: '19:00:00' },
+    ])
+    const b = cls(2, [{ weekday: 3, start_time: '17:00:00', end_time: '18:00:00' }])
+    const closed = cls(3, [{ weekday: 3, start_time: '14:00:00', end_time: '15:00:00' }], false)
+    const schedule = {
+      staffAcademies: [],
+      staffClasses: [a, closed],
+      children: [],
+      childClasses: [{ cls: a, studentIds: [1] }, { cls: b, studentIds: [1] }],
+    }
+    expect(countClassesOn(schedule, 3)).toBe(3)
+    expect(countClassesOn(schedule, 4)).toBe(0)
   })
 })
 

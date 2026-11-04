@@ -138,7 +138,7 @@ function MainApp() {
     // 역할을 바꾸면 화면 전체를 새로 그려 이전 역할의 데이터가 남지 않게 한다
     <UnreadProvider key={user?.id ?? 'guest'} enabled={!!user}>
       {banner}
-      <AppShell isGuest={isGuest}>
+      <AppShell isGuest={isGuest} userId={user?.id}>
         <Routes>
           <Route index element={<HomeTab profile={profile ?? null} onLogin={goLogin} />} />
           <Route path="attendance" element={tabElement('attendance', user ? <AttendanceTab userId={user.id} /> : <></>)} />

@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useAsync } from '@/hooks/useAsync'
-import { useMySchedule, type MySchedule } from '@/hooks/useMySchedule'
+import { countClassesOn, useMySchedule, type MySchedule } from '@/hooks/useMySchedule'
 import { classesOnWeekday, formatSchedules, type ClassInfo } from '@/lib/classes'
 import { addDays, formatDayLabel, formatTime, todayKST, WEEKDAY_LABEL, WEEKDAY_ORDER, weekdayOf } from '@/lib/date'
 import {
@@ -108,11 +108,13 @@ function DayList({ data, day, feedback }: { data: MySchedule; day: number; feedb
     studentIds: data.childClasses.find((c) => c.cls.id === item.cls.id)!.studentIds,
   }))
   const date = latestDateOfWeekday(day)
+  const count = countClassesOn(data, day)
 
   return (
     <section className="flex flex-col gap-3">
       <h2 className="flex items-baseline gap-2 font-semibold">
         {WEEKDAY_LABEL[day]}요일 수업
+        {count > 0 && <span className="text-primary tabular-nums">{count}개</span>}
         {familyItems.length > 0 && feedback && (
           <span className="text-xs font-normal text-muted-foreground tabular-nums">{formatDayLabel(date)}</span>
         )}
