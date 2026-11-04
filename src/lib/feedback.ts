@@ -25,7 +25,13 @@ export type LessonFeedback = {
   rating: Rating
   comment: string | null
   updated_at: string
+  /** 원장·강사 답변 */
+  reply: string | null
+  replied_at: string | null
 }
+
+/** 강사 답변 최대 글자 수 (DB 와 같다) */
+export const REPLY_MAX = 300
 
 function db() {
   if (!supabase) throw new Error('Supabase 설정이 없어요. .env 파일을 확인해 주세요.')
@@ -40,7 +46,7 @@ export async function fetchLessonFeedback(filter: {
 }): Promise<LessonFeedback[]> {
   let query = db()
     .from('lesson_feedback')
-    .select('class_id, student_id, date, rating, comment, updated_at')
+    .select('class_id, student_id, date, rating, comment, updated_at, reply, replied_at')
     .gte('date', filter.from)
     .lte('date', filter.to)
     .order('date', { ascending: false })
@@ -71,6 +77,17 @@ export async function setLessonFeedback(
     p_date: date,
     p_rating: rating,
     p_comment: comment,
+  })
+  if (error) throw error
+}
+
+/** 원장·강사: 답변 달기·고치기, 빈 값이면 지우기 */
+export async function setLessonFeedbackReply(classId: number, studentId: number, date: string, reply: string) {
+  const { error } = await db().rpc('set_lesson_feedback_reply', {
+    p_class_id: classId,
+    p_student_id: studentId,
+    p_date: date,
+    p_reply: reply,
   })
   if (error) throw error
 }
