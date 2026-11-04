@@ -3,9 +3,9 @@ import { Link } from 'react-router'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { useAsync } from '@/hooks/useAsync'
-import { useMySchedule } from '@/hooks/useMySchedule'
+import { countClassesOn, useMySchedule } from '@/hooks/useMySchedule'
 import { useUnread } from '@/hooks/useUnread'
-import { classesOnWeekday, fetchAttendance } from '@/lib/classes'
+import { fetchAttendance } from '@/lib/classes'
 import { todayKST, weekdayOf, weekRange } from '@/lib/date'
 
 /** 홈 요약 카드: 오늘 수업 / 이번 주 출석(가족) 또는 운영 중인 반(원장·강사) / 새 알림 */
@@ -24,9 +24,7 @@ export function HomeSummary({ userId }: { userId?: string }) {
   let todayCount: string = '—'
   let second = { label: '이번 주 출석', value: '—' }
   if (d && userId) {
-    const all = [...d.staffClasses, ...d.childClasses.map((c) => c.cls)]
-    const unique = new Set(classesOnWeekday(all, weekdayOf(today)).map((i) => `${i.cls.id}-${i.schedule.start_time}`))
-    todayCount = String(unique.size)
+    todayCount = String(countClassesOn(d, weekdayOf(today)))
     if (d.children.length > 0 && week.data) {
       const attended = week.data.filter((r) => r.status === 'present' || r.status === 'late').length
       second = { label: '이번 주 출석', value: week.data.length ? `${attended}/${week.data.length}` : '0' }

@@ -3,17 +3,21 @@ import { useLocation, useNavigate } from 'react-router'
 
 import { cn } from '@/lib/utils'
 import { tabFromPath, TABS } from '@/components/layout/tabs'
+import { countClassesOn, useMySchedule } from '@/hooks/useMySchedule'
 import { useUnread } from '@/hooks/useUnread'
+import { todayKST, weekdayOf } from '@/lib/date'
 
 type BottomNavProps = {
   isGuest: boolean
+  userId?: string
 }
 
 /** 모바일 하단 고정 탭. 게스트에게 잠긴 탭도 누를 수 있고, 내용 영역에서 로그인 안내를 보여준다. */
-export function BottomNav({ isGuest }: BottomNavProps) {
+export function BottomNav({ isGuest, userId }: BottomNavProps) {
   const navigate = useNavigate()
   const active = tabFromPath(useLocation().pathname).key
   const { count: unread } = useUnread()
+  const todayClasses = useTodayClassCount(userId, active)
   return (
     <nav
       aria-label="주요 메뉴"
@@ -47,6 +51,14 @@ export function BottomNav({ isGuest }: BottomNavProps) {
                       {unread > 99 ? '99+' : unread}
                     </span>
                   )}
+                  {key === 'classes' && todayClasses > 0 && (
+                    <span
+                      className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-bold text-primary-foreground tabular-nums"
+                      aria-label={`오늘 수업 ${todayClasses}개`}
+                    >
+                      {todayClasses > 99 ? '99+' : todayClasses}
+                    </span>
+                  )}
                   {locked && (
                     <Lock
                       className="absolute -right-1.5 -bottom-1 size-3 rounded-full bg-background p-px"
@@ -62,4 +74,11 @@ export function BottomNav({ isGuest }: BottomNavProps) {
       </ul>
     </nav>
   )
+}
+
+/** 오늘 수업 수. 탭을 옮길 때마다 다시 세어 반을 만들거나 고친 뒤에도 맞게 보인다 */
+function useTodayClassCount(userId: string | undefined, activeTab: string) {
+  const today = todayKST()
+  const { data } = useMySchedule(userId, [activeTab, today])
+  return data && userId ? countClassesOn(data, weekdayOf(today)) : 0
 }

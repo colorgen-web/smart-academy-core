@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useAsync } from '@/hooks/useAsync'
-import { useMySchedule, type MySchedule } from '@/hooks/useMySchedule'
+import { countClassesOn, useMySchedule, type MySchedule } from '@/hooks/useMySchedule'
 import { classesOnWeekday, formatSchedules, type ClassInfo } from '@/lib/classes'
 import { addDays, formatDayLabel, formatTime, todayKST, WEEKDAY_LABEL, WEEKDAY_ORDER, weekdayOf } from '@/lib/date'
 import {
@@ -70,22 +70,37 @@ export function ClassesTab({ userId }: { userId: string }) {
   return (
     <div className="flex flex-col gap-5">
       <div role="tablist" aria-label="요일" className="grid grid-cols-7 gap-1">
-        {WEEKDAY_ORDER.map((d) => (
-          <button
-            key={d}
-            type="button"
-            role="tab"
-            aria-selected={d === day}
-            onClick={() => setDay(d)}
-            className={cn(
-              'flex h-12 flex-col items-center justify-center rounded-xl text-sm font-medium transition-colors',
-              d === day ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground ring-1 ring-foreground/10',
-            )}
-          >
-            {WEEKDAY_LABEL[d]}
-            {d === today && <span className="text-[10px] leading-none opacity-80">오늘</span>}
-          </button>
-        ))}
+        {WEEKDAY_ORDER.map((d) => {
+          const count = countClassesOn(data, d)
+          return (
+            <button
+              key={d}
+              type="button"
+              role="tab"
+              aria-selected={d === day}
+              aria-label={`${WEEKDAY_LABEL[d]}요일${d === today ? ' (오늘)' : ''} 수업 ${count}개`}
+              onClick={() => setDay(d)}
+              className={cn(
+                'relative flex h-12 flex-col items-center justify-center rounded-xl text-sm font-medium transition-colors',
+                d === day ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground ring-1 ring-foreground/10',
+              )}
+            >
+              {WEEKDAY_LABEL[d]}
+              {d === today && <span className="text-[10px] leading-none opacity-80">오늘</span>}
+              {count > 0 && (
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'absolute -top-1.5 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold tabular-nums',
+                    'bg-primary text-primary-foreground ring-2 ring-background',
+                  )}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       <DayList data={data} day={day} feedback={feedback.data} />
@@ -108,11 +123,13 @@ function DayList({ data, day, feedback }: { data: MySchedule; day: number; feedb
     studentIds: data.childClasses.find((c) => c.cls.id === item.cls.id)!.studentIds,
   }))
   const date = latestDateOfWeekday(day)
+  const count = countClassesOn(data, day)
 
   return (
     <section className="flex flex-col gap-3">
       <h2 className="flex items-baseline gap-2 font-semibold">
         {WEEKDAY_LABEL[day]}요일 수업
+        {count > 0 && <span className="text-primary tabular-nums">{count}개</span>}
         {familyItems.length > 0 && feedback && (
           <span className="text-xs font-normal text-muted-foreground tabular-nums">{formatDayLabel(date)}</span>
         )}

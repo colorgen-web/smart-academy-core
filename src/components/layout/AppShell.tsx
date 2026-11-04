@@ -6,11 +6,13 @@ import { tabFromPath } from '@/components/layout/tabs'
 
 type AppShellProps = {
   isGuest: boolean
+  /** 로그인한 사람 (하단 탭의 오늘 수업 수에 쓴다) */
+  userId?: string
   children: ReactNode
 }
 
 /** 상단 헤더 + 내용 + 하단 탭. 모든 로그인 이후 화면(및 게스트 둘러보기)의 공통 틀 */
-export function AppShell({ isGuest, children }: AppShellProps) {
+export function AppShell({ isGuest, userId, children }: AppShellProps) {
   const { pathname } = useLocation()
   const tab = tabFromPath(pathname)
 
@@ -28,7 +30,7 @@ export function AppShell({ isGuest, children }: AppShellProps) {
         {children}
       </main>
 
-      <BottomNav isGuest={isGuest} />
+      <BottomNav isGuest={isGuest} userId={userId} />
     </div>
   )
 }
