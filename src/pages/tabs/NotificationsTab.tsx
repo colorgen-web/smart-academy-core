@@ -6,6 +6,7 @@ import {
   Gauge,
   Megaphone,
   MessageSquare,
+  MessageSquareReply,
   NotebookPen,
   School,
   Send,
@@ -47,6 +48,7 @@ const ICON: Record<NotificationType, { icon: LucideIcon; tone: string }> = {
   academy_post: { icon: NotebookPen, tone: 'bg-accent text-accent-foreground' },
   post_comment: { icon: MessageSquare, tone: 'bg-muted text-muted-foreground' },
   academy_closed: { icon: School, tone: 'bg-destructive/10 text-destructive' },
+  feedback_reply: { icon: MessageSquareReply, tone: 'bg-accent text-accent-foreground' },
 }
 
 /** 알림 탭: 최신순 목록, 누르면 읽음 처리 후 관련 화면으로 */

@@ -136,6 +136,7 @@ export async function seedVerifyData(db: PGlite) {
   // 이민준의 지난 수업 이해도 (7일보다 오래된 기록은 학생 화면으로 못 남기므로 직접 넣는다)
   const ratings = [2, 3, 3, 2, 3, 4, 3, 4, 4, 5]
   const comments: Record<number, string> = { 1: '분수 덧셈이 헷갈렸어요', 4: '도형 돌리기가 어려워요', 8: '오늘은 잘 이해했어요!' }
+  const replies: Record<number, string> = { 4: '다음 시간에 종이로 직접 돌려 보면서 다시 해 볼게요. 걱정 마!' }
   let r = 0
   for (let back = 28; back >= 1; back--) {
     const date = addDays(today, -back)
@@ -150,8 +151,9 @@ export async function seedVerifyData(db: PGlite) {
     await db.transaction(async (tx) => {
       await tx.exec('set local session_replication_role = replica')
       await tx.query(
-        `insert into public.lesson_feedback (class_id, student_id, date, rating, comment, written_by) values ($1, $2, $3, $4, $5, $6)`,
-        [classA, minjun, date, ratings[r], comments[r] ?? null, personaOf('student').id],
+        `insert into public.lesson_feedback (class_id, student_id, date, rating, comment, written_by, reply, reply_by, replied_at)
+         values ($1, $2, $3, $4, $5, $6, $7, case when $7::text is null then null else $8::uuid end, case when $7::text is null then null else now() end)`,
+        [classA, minjun, date, ratings[r], comments[r] ?? null, personaOf('student').id, replies[r] ?? null, personaOf('teacher').id],
       )
     })
     r++
