@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useAsync } from '@/hooks/useAsync'
 import { countClassesOn, useMySchedule, type MySchedule } from '@/hooks/useMySchedule'
+import { academyTones, type AcademyTone } from '@/lib/academyColor'
 import { classesOnWeekday, formatSchedules, type ClassInfo } from '@/lib/classes'
 import { addDays, formatDayLabel, formatTime, todayKST, WEEKDAY_LABEL, WEEKDAY_ORDER, weekdayOf } from '@/lib/date'
 import {
@@ -67,6 +68,13 @@ export function ClassesTab({ userId }: { userId: string }) {
     )
   }
 
+  // 학원이 2곳 이상이면 학원마다 색 점·띠로 구분
+  const tones = academyTones([
+    ...data.staffAcademies.map((a) => a.id),
+    ...data.staffClasses.map((c) => c.academy_id),
+    ...data.childClasses.map((c) => c.cls.academy_id),
+  ])
+
   return (
     <div className="flex flex-col gap-5">
       <div role="tablist" aria-label="요일" className="grid grid-cols-7 gap-1">
@@ -82,7 +90,9 @@ export function ClassesTab({ userId }: { userId: string }) {
               onClick={() => setDay(d)}
               className={cn(
                 'relative flex h-12 flex-col items-center justify-center rounded-xl text-sm font-medium transition-colors',
-                d === day ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground ring-1 ring-foreground/10',
+                d === day
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-card text-muted-foreground ring-1 ring-foreground/10',
               )}
             >
               {WEEKDAY_LABEL[d]}
@@ -103,16 +113,26 @@ export function ClassesTab({ userId }: { userId: string }) {
         })}
       </div>
 
-      <DayList data={data} day={day} feedback={feedback.data} />
+      <DayList data={data} day={day} feedback={feedback.data} tones={tones} />
 
-      {hasStaff && <StaffClassList data={data} />}
+      {hasStaff && <StaffClassList data={data} tones={tones} />}
     </div>
   )
 }
 
 type FeedbackData = { records: LessonFeedback[]; ownIds: number[] } | null | undefined
 
-function DayList({ data, day, feedback }: { data: MySchedule; day: number; feedback: FeedbackData }) {
+function DayList({
+  data,
+  day,
+  feedback,
+  tones,
+}: {
+  data: MySchedule
+  day: number
+  feedback: FeedbackData
+  tones: Map<number, AcademyTone>
+}) {
   const childName = new Map(data.children.map((c) => [c.id, c.name]))
   const staffItems = classesOnWeekday(data.staffClasses, day)
   const familyItems = classesOnWeekday(
@@ -139,13 +159,19 @@ function DayList({ data, day, feedback }: { data: MySchedule; day: number; feedb
       ) : (
         <ul className="flex flex-col gap-2">
           {staffItems.map(({ cls, schedule }) => (
-            <ScheduleRow key={`s-${cls.id}-${schedule.start_time}`} cls={cls} time={schedule} />
+            <ScheduleRow
+              key={`s-${cls.id}-${schedule.start_time}`}
+              cls={cls}
+              time={schedule}
+              tone={tones.get(cls.academy_id)}
+            />
           ))}
           {familyItems.map(({ cls, schedule, studentIds }) => (
             <ScheduleRow
               key={`f-${cls.id}-${schedule.start_time}`}
               cls={cls}
               time={schedule}
+              tone={tones.get(cls.academy_id)}
               who={studentIds.map((id) => childName.get(id)).filter((n): n is string => !!n)}
               below={
                 feedback && (
@@ -169,27 +195,33 @@ function DayList({ data, day, feedback }: { data: MySchedule; day: number; feedb
 function ScheduleRow({
   cls,
   time,
+  tone,
   who,
   below,
 }: {
   cls: ClassInfo
   time: { start_time: string; end_time: string }
+  /** 학원이 여러 곳일 때 학원 구분 색 */
+  tone?: AcademyTone
   who?: string[]
   below?: ReactNode
 }) {
   return (
-    <li className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
-      <Link
-        to={`/classes/${cls.id}`}
-        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/60"
-      >
+    <li
+      className={cn(
+        'overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10',
+        tone && `border-l-4 ${tone.stripe}`,
+      )}
+    >
+      <Link to={`/classes/${cls.id}`} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/60">
         <div className="w-14 shrink-0 text-center tabular-nums">
           <p className="font-semibold">{formatTime(time.start_time)}</p>
           <p className="text-xs text-muted-foreground">{formatTime(time.end_time)}</p>
         </div>
         <div className="min-w-0 flex-1 border-l pl-3">
           <p className="truncate font-medium">{cls.name}</p>
-          <p className="truncate text-xs text-muted-foreground">
+          <p className="flex items-center gap-1.5 truncate text-xs text-muted-foreground">
+            {tone && <span className={cn('size-2 shrink-0 rounded-full', tone.dot)} aria-hidden="true" />}
             {cls.academy.name}
             {cls.room && ` · ${cls.room}`}
           </p>
@@ -268,13 +300,16 @@ function FeedbackLine({
 
 /** 지금 한국 시간 'HH:MM' */
 function nowTimeKST() {
-  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false }).format(
-    new Date(),
-  )
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Seoul',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date())
 }
 
 /** 원장·강사: 학원별 반 목록 + 반 만들기·학생 명단 */
-function StaffClassList({ data }: { data: MySchedule }) {
+function StaffClassList({ data, tones }: { data: MySchedule; tones: Map<number, AcademyTone> }) {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="font-semibold">반 관리</h2>
@@ -282,10 +317,17 @@ function StaffClassList({ data }: { data: MySchedule }) {
         const classes = data.staffClasses.filter((c) => c.academy_id === academy.id)
         const active = classes.filter((c) => c.active)
         const archived = classes.length - active.length
+        const tone = tones.get(academy.id)
         return (
-          <Card key={academy.id} className="gap-0 py-0">
-            <div className="flex items-center gap-2 border-b px-4 py-3">
-              <h3 className="flex-1 truncate font-semibold">{academy.name}</h3>
+          <Card key={academy.id} className={cn('gap-0 py-0', tone && `border-l-4 ${tone.stripe}`)}>
+            <div className={cn('flex items-center gap-2 border-b px-4 py-3', tone && 'bg-muted/60')}>
+              {tone && <span className={cn('size-2.5 shrink-0 rounded-full', tone.dot)} aria-hidden="true" />}
+              <div className="min-w-0 flex-1">
+                <h3 className="truncate font-semibold">{academy.name}</h3>
+                <p className="text-xs text-muted-foreground">
+                  {academy.role === 'director' ? '원장' : '강사'} · 반 {active.length}개
+                </p>
+              </div>
               <Button asChild size="sm" variant="ghost">
                 <Link to={`/academies/${academy.id}/students`}>
                   <UsersRound data-icon="inline-start" />
@@ -311,7 +353,9 @@ function StaffClassList({ data }: { data: MySchedule }) {
                     <Link to={`/classes/${c.id}`} className="flex items-center gap-2 px-4 py-3 hover:bg-muted/60">
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium">{c.name}</p>
-                        <p className="truncate text-xs text-muted-foreground tabular-nums">{formatSchedules(c.schedules)}</p>
+                        <p className="truncate text-xs text-muted-foreground tabular-nums">
+                          {formatSchedules(c.schedules)}
+                        </p>
                       </div>
                       {c.subject && <Badge variant="secondary">{c.subject}</Badge>}
                       <ChevronRight className="size-4 text-muted-foreground" />
