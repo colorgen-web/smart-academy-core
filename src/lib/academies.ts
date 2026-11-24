@@ -12,13 +12,15 @@ export type Academy = {
   join_code: string
   owner_id: string
   review_note: string | null
+  /** 엠블렘 이미지 (data URL) */
+  emblem: string | null
   created_at: string
 }
 
 export type MyAcademy = {
   role: AcademyRole
   status: ApprovalStatus
-  academy: Pick<Academy, 'id' | 'name' | 'status'>
+  academy: Pick<Academy, 'id' | 'name' | 'status' | 'emblem'>
 }
 
 export type AcademyMember = {
@@ -64,7 +66,7 @@ export function errorMessage(error: unknown, fallback: string) {
 export async function fetchMyAcademies(userId: string): Promise<MyAcademy[]> {
   const { data, error } = await db()
     .from('academy_members')
-    .select('role, status, academy:academies(id, name, status)')
+    .select('role, status, academy:academies(id, name, status, emblem)')
     .eq('user_id', userId)
     .order('requested_at', { ascending: true })
   if (error) throw error
@@ -74,7 +76,7 @@ export async function fetchMyAcademies(userId: string): Promise<MyAcademy[]> {
 export async function fetchAcademy(id: number): Promise<Academy | null> {
   const { data, error } = await db()
     .from('academies')
-    .select('id, name, phone, address, status, join_code, owner_id, review_note, created_at')
+    .select('id, name, phone, address, status, join_code, owner_id, review_note, emblem, created_at')
     .eq('id', id)
     .maybeSingle()
   if (error) throw error
@@ -100,6 +102,12 @@ export async function registerAcademy(input: { name: string; phone?: string; add
   })
   if (error) throw error
   return data as number
+}
+
+/** 엠블렘 바꾸기 (null 이면 지우기). 원장·운영자만 */
+export async function setAcademyEmblem(academyId: number, emblem: string | null) {
+  const { error } = await db().rpc('set_academy_emblem', { p_academy_id: academyId, p_emblem: emblem })
+  if (error) throw error
 }
 
 export async function findAcademyByCode(code: string) {
@@ -139,7 +147,7 @@ export async function regenerateJoinCode(academyId: number) {
 export async function fetchAcademiesForReview(status: ApprovalStatus): Promise<AcademyForReview[]> {
   const { data, error } = await db()
     .from('academies')
-    .select('id, name, phone, address, status, join_code, owner_id, review_note, created_at')
+    .select('id, name, phone, address, status, join_code, owner_id, review_note, emblem, created_at')
     .eq('status', status)
     .order('created_at', { ascending: false })
   if (error) throw error
