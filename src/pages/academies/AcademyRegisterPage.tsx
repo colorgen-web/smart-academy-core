@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 
+import { EmblemPicker } from '@/components/academies/AcademyEmblem'
 import { Field } from '@/components/Field'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { errorMessage, registerAcademy } from '@/lib/academies'
+import { errorMessage, registerAcademy, setAcademyEmblem } from '@/lib/academies'
 import { inputClass } from '@/lib/styles'
 
 /** 원장: 학원 등록 → 운영자 승인 대기 */
@@ -14,6 +15,7 @@ export function AcademyRegisterPage() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
+  const [emblem, setEmblem] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -27,6 +29,8 @@ export function AcademyRegisterPage() {
     setError(null)
     try {
       const id = await registerAcademy({ name: name.trim(), phone: phoneDigits, address: address.trim() })
+      // 엠블렘 저장이 실패해도 등록은 된 것이므로 학원 화면으로 보낸다 (거기서 다시 올릴 수 있다)
+      if (emblem) await setAcademyEmblem(id, emblem).catch(() => undefined)
       navigate(`/academies/${id}`, { replace: true })
     } catch (err) {
       setError(errorMessage(err, '등록하지 못했어요. 잠시 후 다시 시도해 주세요.'))
@@ -40,6 +44,10 @@ export function AcademyRegisterPage() {
       <Card>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium">학원 엠블렘 (선택)</span>
+              <EmblemPicker value={emblem} name={name} onChange={setEmblem} disabled={saving} />
+            </div>
             <Field label="학원 이름">
               <input
                 value={name}

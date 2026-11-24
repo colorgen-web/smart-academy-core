@@ -213,6 +213,15 @@ select created, status_code, left(content::text, 300) from net._http_response or
 - 운영 중인 학원의 원장은 학원을 먼저 지우면 탈퇴할 수 있다
 - 마이그레이션: `supabase/migrations/20261014000000_academy_deletion.sql` (academy_board 다음에 실행)
 
+## 학원 엠블렘
+
+학원 등록 화면 맨 위 **학원 엠블렘 (선택)**, 또는 학원 상세의 **학원 엠블렘** 카드(원장)에서 올리고 바꾸고 지운다.
+
+- 메인 화면 "내 학원" 목록과 학원 상세에 보인다. 없으면 학원 이름 첫 글자
+- 앱이 가운데를 정사각형으로 잘라 256px webp(안 되면 png) data URL 로 줄여 `academies.emblem` 에 저장 (Storage 버킷 필요 없음)
+- 바꾸기는 DB 함수 `set_academy_emblem` 으로만: 학원을 등록한 원장·승인된 원장·운영자. 형식(png/jpeg/webp)과 크기(20만 자)를 DB 가 다시 확인
+- 마이그레이션: `supabase/migrations/20261124000000_academy_emblem.sql` (**앱 배포 전에** 먼저 실행)
+
 ## 회원 탈퇴
 
 설정 > 맨 아래 **회원 탈퇴**. DB 함수 `delete_my_account()` 가 로그인 계정(auth.users)을 지우면 회원 정보·학원 소속·알림·네이버 연결이 함께 지워집니다.

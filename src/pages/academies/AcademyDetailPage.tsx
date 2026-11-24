@@ -2,6 +2,7 @@ import { BookOpen, Check, ChevronRight, Copy, MapPin, NotebookPen, Phone, Refres
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 
+import { AcademyEmblem, EmblemPicker } from '@/components/academies/AcademyEmblem'
 import { StatusBadge } from '@/components/academies/StatusBadge'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Badge } from '@/components/ui/badge'
@@ -17,6 +18,7 @@ import {
   fetchMyMembership,
   formatAcademyPhone,
   regenerateJoinCode,
+  setAcademyEmblem,
   ROLE_LABEL,
   type Academy,
   type AcademyMember,
@@ -36,6 +38,8 @@ export function AcademyDetailPage({ userId }: { userId: string }) {
     },
     [id, userId],
   )
+  // 엠블렘을 바꾸면 다시 불러오지 않고 화면에 바로 반영 (undefined = 불러온 값 그대로)
+  const [savedEmblem, setEmblem] = useState<string | null | undefined>(undefined)
 
   if (loading) {
     return (
@@ -66,7 +70,9 @@ export function AcademyDetailPage({ userId }: { userId: string }) {
   }
 
   const { academy, membership } = data
+  const emblem = savedEmblem === undefined ? academy.emblem : savedEmblem
   const isDirector = membership?.role === 'director' && membership.status === 'approved'
+  const canEditEmblem = isDirector || academy.owner_id === userId
 
   return (
     <div className="flex flex-col gap-4">
@@ -74,7 +80,8 @@ export function AcademyDetailPage({ userId }: { userId: string }) {
 
       <Card>
         <CardContent className="flex flex-col gap-3">
-          <div className="flex items-start gap-2">
+          <div className="flex items-center gap-3">
+            <AcademyEmblem src={emblem} name={academy.name} className="size-12 text-xl" />
             <h2 className="flex-1 text-lg font-semibold leading-snug">{academy.name}</h2>
             <StatusBadge status={academy.status} />
           </div>
@@ -153,10 +160,57 @@ export function AcademyDetailPage({ userId }: { userId: string }) {
           </Card>
         )}
 
+      {canEditEmblem && <EmblemCard academy={academy} value={emblem} onSaved={setEmblem} />}
+
       {isDirector && <DirectorPanel academy={academy} />}
 
       {academy.owner_id === userId && <DeleteAcademyCard academy={academy} />}
     </div>
+  )
+}
+
+/** 원장: 엠블렘 바꾸기 (고르면 바로 저장) */
+function EmblemCard({
+  academy,
+  value,
+  onSaved,
+}: {
+  academy: Academy
+  value: string | null
+  onSaved: (emblem: string | null) => void
+}) {
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const save = async (next: string | null) => {
+    if (next === null && !window.confirm('엠블렘을 지울까요?')) return
+    setSaving(true)
+    setError(null)
+    try {
+      await setAcademyEmblem(academy.id, next)
+      onSaved(next)
+    } catch (err) {
+      setError(errorMessage(err, '엠블렘을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>학원 엠블렘</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2">
+        <EmblemPicker value={value} name={academy.name} onChange={save} disabled={saving} />
+        {saving && <p className="text-xs text-muted-foreground">저장 중…</p>}
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 

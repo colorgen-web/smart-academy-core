@@ -1,6 +1,7 @@
 import { ChevronRight, Plus, School, Ticket } from 'lucide-react'
 import { Link } from 'react-router'
 
+import { AcademyEmblem } from '@/components/academies/AcademyEmblem'
 import { StatusBadge } from '@/components/academies/StatusBadge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -38,8 +39,9 @@ export function MyAcademies({ profile }: { profile: Profile }) {
             <li key={academy.id}>
               <Link
                 to={`/academies/${academy.id}`}
-                className="flex items-center gap-2 px-4 py-3 transition-colors hover:bg-muted/60"
+                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/60"
               >
+                <AcademyEmblem src={academy.emblem} name={academy.name} />
                 <span className="min-w-0 flex-1 truncate font-medium">{academy.name}</span>
                 <Badge variant="outline">{ROLE_LABEL[role]}</Badge>
                 {academy.status !== 'approved' ? (
